@@ -1,5 +1,6 @@
 *.class
 .metadata*
+Servers*
 # Package Files #
 *.jar
 *.war
