@@ -3,7 +3,9 @@ package coreservlets;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 import javax.servlet.ServletConfig;
@@ -20,7 +22,7 @@ public class MyResponse extends HttpServlet {
 	private ConcurrentMap<Integer, UserContents> session_info = new ConcurrentHashMap<Integer, UserContents>();
 	private int counter = 0;
 	private String StandardCookieName = "CS5300PROJ1SESSION";
-	public int time_out_secs = 60;
+	public int time_out_secs = 5;
 	
 	private class DataContents{
 		public int sessionID;
@@ -41,8 +43,8 @@ public class MyResponse extends HttpServlet {
 			super(sessionID, version_number);
 			// TODO Auto-generated constructor stub
 		}
-		private String message;
-		private long time_in_secs;
+		private String message = new String();
+		private long time_in_secs = 0;
 	}
 	
 	Cookie createCookie(int sessionID, int version_number, String lm){
@@ -80,7 +82,7 @@ public class MyResponse extends HttpServlet {
     public synchronized Cookie modCounterCreateCookie(int version_number, String msg, String lm){
     	Cookie retCookie = createCookie(counter, version_number, lm);
     	UserContents uc = new UserContents(counter, version_number);
-    	uc.message = msg;
+    	uc.message = new String(msg);
     	uc.time_in_secs = System.currentTimeMillis()/1000 + (long)time_out_secs;
     	session_info.put(counter, uc);
     	counter += 1;
@@ -91,7 +93,7 @@ public class MyResponse extends HttpServlet {
 		response.addCookie(createCookie(cc.sessionID, cc.version_number + 1, cc.lm));
     	UserContents uc = new UserContents(cc.sessionID, cc.version_number);
     	if(msg == null) uc.message = session_info.get(cc.sessionID).message;
-    	else uc.message = msg;
+    	else uc.message = new String(msg);
     	uc.time_in_secs = System.currentTimeMillis()/1000 + (long)time_out_secs;
     	session_info.put(cc.sessionID, uc);
     }
@@ -105,10 +107,10 @@ public class MyResponse extends HttpServlet {
 		
 		// first time cookie and website handling here
 		Cookie req_cookie = GetRequestCookie(request.getCookies());
-		if(req_cookie == null){
+		if(req_cookie == null || session_info.get(readCookie(req_cookie).sessionID) == null){
 			Cookie resp_cookie = modCounterCreateCookie(0, "Default Message.", "");
 		    out.print("<big><big><b>\n" + 
-		    		session_info.get(Integer.parseInt(resp_cookie.getValue().split(",")[0])) 
+		    		"Default Message."
 		    		+ "</b></big></big>\n");
 		    response.addCookie(resp_cookie);
 		    out.print(getWebsite());
@@ -140,27 +142,35 @@ public class MyResponse extends HttpServlet {
 	    	}
     	}
 	    
-	    out.print("<big><big><b>\n"+session_info.get(0)+"</b></big></big>\n");
-	    out.print(getWebsite());
+
+		    out.print("<big><big><b>\n"+((UserContents)session_info.get(cc.sessionID)).message+"</b></big></big>\n");
+		    out.print(getWebsite());
+
+		    synchronized(this){		    
+		    for(Iterator<ConcurrentMap.Entry<Integer, UserContents>> it 
+		    		= session_info.entrySet().iterator();
+		    		it.hasNext();){
+		    	ConcurrentMap.Entry<Integer, UserContents> e = it.next();
+		    	if(((UserContents)e.getValue()).time_in_secs < System.currentTimeMillis()/1000){
+		    		it.remove();
+		    	}
+		    }
+	    }	    
 	}
 	
 	String getWebsite(){
 		return "<html>\n" +
     			"<body>\n" +
     			"<form method=GET action=\"my-response\">" +
-    			"<input type=text name=Username size=10 maxlength=512>" +
-				"&nbsp;&nbsp;" +
 				"<input type=text name=NewText size=30 maxlength=512>" +
 				"&nbsp;&nbsp;" +
 				"<input type=submit name=cmd value=Save>" +
 				"&nbsp;&nbsp;" +
 				"</form>" +
 				"<form method=GET action=\"my-response\">" +
-				"<input type=text name=Username size=10 maxlength=512>" +
-				"&nbsp;&nbsp;" +
 				"<input type=submit name=REF value=Refresh>" +
 				"</form>" +
-				"<form method=GET action=\"eg3.html\">" +
+				"<form method=GET action=\"my-response\">" +
 				"<input type=submit name=ESC value=LogOut>" +
 				"</form>" +
 				"</body>" +
