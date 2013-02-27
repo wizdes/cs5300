@@ -25,23 +25,27 @@ public class MyResponse extends HttpServlet {
 	public int time_out_secs = 5;
 	
 	private class DataContents{
-		public int sessionID;
-		public int version_number;
-		DataContents(){}
-		DataContents(int sessionID, int version_number){
+		public DataContents(int sessionID, int version_number) {
 			this.sessionID = sessionID;
 			this.version_number = version_number;
 		}
+		public int sessionID;
+		public int version_number;
 	}
 	
 	private class CookieContents extends DataContents{
+		public CookieContents(int sessionID, int version_number, String lm){
+			super(sessionID, version_number);
+			this.lm =  lm;
+		}
 		private String lm;
 	}
 	
-	private class UserContents extends DataContents{		
-		UserContents(int sessionID, int version_number) {
+	private class UserContents extends DataContents{
+		public UserContents(int sessionID, int version_number, String message, long time_in_secs){
 			super(sessionID, version_number);
-			// TODO Auto-generated constructor stub
+			this.message = message;
+			this.time_in_secs = time_in_secs;
 		}
 		private String message = new String();
 		private long time_in_secs = 0;
@@ -50,15 +54,13 @@ public class MyResponse extends HttpServlet {
 	Cookie createCookie(int sessionID, int version_number, String lm){
 
 		Cookie retCookie =  new Cookie(StandardCookieName, sessionID + "," + version_number + "," + lm);
-		
 		return retCookie;
 	}
 	
 	CookieContents readCookie(Cookie c) {
-		CookieContents read = new CookieContents();
+		if(c == null) return null;
 		String[] contents = c.getValue().split(",");
-		read.sessionID = Integer.parseInt(contents[0]);
-		read.version_number = Integer.parseInt(contents[1]);
+		CookieContents read = new CookieContents(Integer.parseInt(contents[0]),Integer.parseInt(contents[1]), "");
 		read.lm = (contents.length > 2) ? contents[2] : "";
 		return read;
 	}
@@ -81,85 +83,21 @@ public class MyResponse extends HttpServlet {
     
     public synchronized Cookie modCounterCreateCookie(int version_number, String msg, String lm){
     	Cookie retCookie = createCookie(counter, version_number, lm);
-    	UserContents uc = new UserContents(counter, version_number);
-    	uc.message = new String(msg);
-    	uc.time_in_secs = System.currentTimeMillis()/1000 + (long)time_out_secs;
+    	UserContents uc = new UserContents(counter, version_number, new String(msg), System.currentTimeMillis()/1000 + (long)time_out_secs );
     	session_info.put(counter, uc);
     	counter += 1;
     	return retCookie;
     }
     
-    public synchronized void modState(CookieContents cc, HttpServletResponse response, String msg){
+    public void modState(CookieContents cc, HttpServletResponse response, String msg){
 		response.addCookie(createCookie(cc.sessionID, cc.version_number + 1, cc.lm));
-    	UserContents uc = new UserContents(cc.sessionID, cc.version_number);
-    	if(msg == null) uc.message = session_info.get(cc.sessionID).message;
-    	else uc.message = new String(msg);
-    	uc.time_in_secs = System.currentTimeMillis()/1000 + (long)time_out_secs;
+    	UserContents uc = new UserContents(cc.sessionID, cc.version_number, new String(msg), System.currentTimeMillis()/1000 + (long)time_out_secs);
     	session_info.put(cc.sessionID, uc);
     }
-	
-
-	@Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-	    response.setContentType("text/html");
-	    PrintWriter out = response.getWriter();
-
-		
-		// first time cookie and website handling here
-		Cookie req_cookie = GetRequestCookie(request.getCookies());
-		if(req_cookie == null || session_info.get(readCookie(req_cookie).sessionID) == null){
-			Cookie resp_cookie = modCounterCreateCookie(0, "Default Message.", "");
-		    out.print("<big><big><b>\n" + 
-		    		"Default Message."
-		    		+ "</b></big></big>\n");
-		    response.addCookie(resp_cookie);
-		    out.print(getWebsite());
-		    return;
-		}
-		
-		// response stuff
-		CookieContents cc = readCookie(req_cookie);
-		
-		Enumeration<String> paramNames = request.getParameterNames();
-	    while(paramNames.hasMoreElements()) {
-	    	String paramName = paramNames.nextElement();
-	    	String[] paramValues = request.getParameterValues(paramName);
-	    	
-	    	if (paramValues.length == 1 && paramName.equals("REF")){
-	    		modState(cc, response, null);
-	    		break;
-	    	}
-	    	
-	    	if (paramValues.length == 1 && paramName.equals("NewText")) {
-	    		String paramValue = paramValues[0];
-	    		modState(cc, response, paramValue);
-	    		break;
-	    	}	    
-	    	
-	    	if (paramValues.length == 1 && paramName.equals("ESC")){
-	    		session_info.remove(cc.sessionID);
-	    		break;
-	    	}
-    	}
-	    
-
-		    out.print("<big><big><b>\n"+((UserContents)session_info.get(cc.sessionID)).message+"</b></big></big>\n");
-		    out.print(getWebsite());
-
-		    synchronized(this){		    
-		    for(Iterator<ConcurrentMap.Entry<Integer, UserContents>> it 
-		    		= session_info.entrySet().iterator();
-		    		it.hasNext();){
-		    	ConcurrentMap.Entry<Integer, UserContents> e = it.next();
-		    	if(((UserContents)e.getValue()).time_in_secs < System.currentTimeMillis()/1000){
-		    		it.remove();
-		    	}
-		    }
-	    }	    
-	}
-	
-	String getWebsite(){
-		return "<html>\n" +
+    
+	void printWebsite(String msg, PrintWriter out, CookieContents cc){
+		out.print("<big><big><b>\n" + msg + "</b></big></big>\n");
+		out.print("<html>\n" +
     			"<body>\n" +
     			"<form method=GET action=\"my-response\">" +
 				"<input type=text name=NewText size=30 maxlength=512>" +
@@ -174,7 +112,59 @@ public class MyResponse extends HttpServlet {
 				"<input type=submit name=ESC value=LogOut>" +
 				"</form>" +
 				"</body>" +
-	    		"</html>";
+	    		"</html>");
+	}
+	
+
+	@Override
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	    response.setContentType("text/html");
+	    PrintWriter out = response.getWriter();
+		
+		// first time cookie and website handling here
+	    CookieContents cc = readCookie(GetRequestCookie(request.getCookies()));
+		if(cc == null || session_info.get(cc.sessionID) == null){
+			Cookie resp_cookie = modCounterCreateCookie(0, "Default Message.", "");
+		    response.addCookie(resp_cookie);
+		    printWebsite("Default Message.", out, cc);
+		    return;
+		}
+		
+		Enumeration<String> paramNames = request.getParameterNames();
+	    while(paramNames.hasMoreElements()) {
+	    	String paramName = paramNames.nextElement();
+	    	String[] paramValues = request.getParameterValues(paramName);
+	    	
+	    	if (paramValues.length == 1 && paramName.equals("REF")){
+	    		modState(cc, response, session_info.get(cc.sessionID).message);
+	    		break;
+	    	}
+	    	
+	    	if (paramValues.length == 1 && paramName.equals("NewText")) {
+	    		String paramValue = paramValues[0];
+	    		modState(cc, response, paramValue);
+	    		break;
+	    	}	    
+	    	
+	    	if (paramValues.length == 1 && paramName.equals("ESC")){
+	    		printWebsite("Default Message.", out, cc);
+	    		session_info.remove(cc.sessionID);
+	    		return;
+	    	}
+    	}
+    
+	    printWebsite(session_info.get(cc.sessionID).message, out, cc);
+
+	    synchronized(this){		    
+	    for(Iterator<ConcurrentMap.Entry<Integer, UserContents>> it 
+	    		= session_info.entrySet().iterator();
+	    		it.hasNext();){
+	    	ConcurrentMap.Entry<Integer, UserContents> e = it.next();
+		    	if(((UserContents)e.getValue()).time_in_secs < System.currentTimeMillis()/1000){
+		    		it.remove();
+		    	}
+	    	}
+	    }	    
 	}
 	
 	@Override
