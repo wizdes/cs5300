@@ -1,5 +1,6 @@
 *.class
 .metadata*
+*.bak
 Servers*
 # Package Files #
 *.jar
