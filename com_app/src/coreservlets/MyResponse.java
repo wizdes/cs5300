@@ -20,19 +20,29 @@ public class MyResponse extends HttpServlet {
 	private ConcurrentMap<Integer, UserContents> session_info = new ConcurrentHashMap<Integer, UserContents>();
 	private int counter = 0;
 	private String StandardCookieName = "CS5300PROJ1SESSION";
+	public int time_out_secs = 60;
 	
 	private class DataContents{
 		public int sessionID;
 		public int version_number;
+		DataContents(){}
+		DataContents(int sessionID, int version_number){
+			this.sessionID = sessionID;
+			this.version_number = version_number;
+		}
 	}
 	
 	private class CookieContents extends DataContents{
 		private String lm;
 	}
 	
-	private class UserContents extends DataContents{
+	private class UserContents extends DataContents{		
+		UserContents(int sessionID, int version_number) {
+			super(sessionID, version_number);
+			// TODO Auto-generated constructor stub
+		}
 		private String message;
-		private int time_in_secs;
+		private long time_in_secs;
 	}
 	
 	Cookie createCookie(int sessionID, int version_number, String lm){
@@ -58,6 +68,7 @@ public class MyResponse extends HttpServlet {
     }
     
     Cookie GetRequestCookie(Cookie[] cookies){
+    	if(cookies == null) return null;
     	for(Cookie c:cookies){
     		if(c.getName().equals(StandardCookieName)){
     			return c;
@@ -66,10 +77,23 @@ public class MyResponse extends HttpServlet {
     	return null;
     }
     
-    public synchronized Cookie modCounterGetCookie(int version_number, String lm){
+    public synchronized Cookie modCounterCreateCookie(int version_number, String msg, String lm){
     	Cookie retCookie = createCookie(counter, version_number, lm);
+    	UserContents uc = new UserContents(counter, version_number);
+    	uc.message = msg;
+    	uc.time_in_secs = System.currentTimeMillis()/1000 + (long)time_out_secs;
+    	session_info.put(counter, uc);
     	counter += 1;
     	return retCookie;
+    }
+    
+    public synchronized void modState(CookieContents cc, HttpServletResponse response, String msg){
+		response.addCookie(createCookie(cc.sessionID, cc.version_number + 1, cc.lm));
+    	UserContents uc = new UserContents(cc.sessionID, cc.version_number);
+    	if(msg == null) uc.message = session_info.get(cc.sessionID).message;
+    	else uc.message = msg;
+    	uc.time_in_secs = System.currentTimeMillis()/1000 + (long)time_out_secs;
+    	session_info.put(cc.sessionID, uc);
     }
 	
 
@@ -79,28 +103,41 @@ public class MyResponse extends HttpServlet {
 	    PrintWriter out = response.getWriter();
 
 		
-		// cookie stuff here
+		// first time cookie and website handling here
 		Cookie req_cookie = GetRequestCookie(request.getCookies());
 		if(req_cookie == null){
-			modCounterGetCookie(0, "");
-		    out.print("<big><big><b>\n"+session_info.get(0)+"</b></big></big>\n");
+			Cookie resp_cookie = modCounterCreateCookie(0, "Default Message.", "");
+		    out.print("<big><big><b>\n" + 
+		    		session_info.get(Integer.parseInt(resp_cookie.getValue().split(",")[0])) 
+		    		+ "</b></big></big>\n");
+		    response.addCookie(resp_cookie);
 		    out.print(getWebsite());
 		    return;
 		}
 		
 		// response stuff
+		CookieContents cc = readCookie(req_cookie);
 		
 		Enumeration<String> paramNames = request.getParameterNames();
-		String username = "";
 	    while(paramNames.hasMoreElements()) {
 	    	String paramName = paramNames.nextElement();
 	    	String[] paramValues = request.getParameterValues(paramName);
 	    	
+	    	if (paramValues.length == 1 && paramName.equals("REF")){
+	    		modState(cc, response, null);
+	    		break;
+	    	}
+	    	
 	    	if (paramValues.length == 1 && paramName.equals("NewText")) {
 	    		String paramValue = paramValues[0];
-	    		//session_info.put(username, paramValue);
-	    		continue;
+	    		modState(cc, response, paramValue);
+	    		break;
 	    	}	    
+	    	
+	    	if (paramValues.length == 1 && paramName.equals("ESC")){
+	    		session_info.remove(cc.sessionID);
+	    		break;
+	    	}
     	}
 	    
 	    out.print("<big><big><b>\n"+session_info.get(0)+"</b></big></big>\n");
@@ -121,10 +158,10 @@ public class MyResponse extends HttpServlet {
 				"<form method=GET action=\"my-response\">" +
 				"<input type=text name=Username size=10 maxlength=512>" +
 				"&nbsp;&nbsp;" +
-				"<input type=submit name=cmd value=Refresh>" +
+				"<input type=submit name=REF value=Refresh>" +
 				"</form>" +
 				"<form method=GET action=\"eg3.html\">" +
-				"<input type=submit name=cmd value=LogOut>" +
+				"<input type=submit name=ESC value=LogOut>" +
 				"</form>" +
 				"</body>" +
 	    		"</html>";
