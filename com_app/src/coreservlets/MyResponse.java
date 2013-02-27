@@ -2,6 +2,7 @@ package coreservlets;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -95,7 +96,7 @@ public class MyResponse extends HttpServlet {
     	session_info.put(cc.sessionID, uc);
     }
     
-	void printWebsite(String msg, PrintWriter out, CookieContents cc){
+	void printWebsite(String msg, PrintWriter out, CookieContents cc, HttpServletRequest request){
 		out.print("<big><big><b>\n" + msg + "</b></big></big>\n");
 		out.print("<html>\n" +
     			"<body>\n" +
@@ -113,6 +114,8 @@ public class MyResponse extends HttpServlet {
 				"</form>" +
 				"</body>" +
 	    		"</html>");
+		out.print("Session on: " + request.getRemoteAddr() + ":" + request.getRemotePort() + "<br/>");
+		out.print("Expires " + new Date(session_info.get(cc.sessionID).time_in_secs * 1000));
 	}
 	
 
@@ -126,7 +129,7 @@ public class MyResponse extends HttpServlet {
 		if(cc == null || session_info.get(cc.sessionID) == null){
 			Cookie resp_cookie = modCounterCreateCookie(0, "Default Message.", "");
 		    response.addCookie(resp_cookie);
-		    printWebsite("Default Message.", out, cc);
+		    printWebsite("Default Message.", out, readCookie(resp_cookie), request);
 		    return;
 		}
 		
@@ -147,13 +150,13 @@ public class MyResponse extends HttpServlet {
 	    	}	    
 	    	
 	    	if (paramValues.length == 1 && paramName.equals("ESC")){
-	    		printWebsite("Default Message.", out, cc);
+	    		printWebsite("Default Message.", out, cc, request);
 	    		session_info.remove(cc.sessionID);
 	    		return;
 	    	}
     	}
     
-	    printWebsite(session_info.get(cc.sessionID).message, out, cc);
+	    printWebsite(session_info.get(cc.sessionID).message, out, cc, request);
 
 	    synchronized(this){		    
 	    for(Iterator<ConcurrentMap.Entry<Integer, UserContents>> it 
