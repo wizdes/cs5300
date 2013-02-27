@@ -5,9 +5,7 @@ import javax.servlet.http.Cookie;
 public class SessionUtilities {
 
 	public static Cookie createCookie(String cookieName, int sessionID, int version_number, String lm){
-
-		Cookie retCookie =  new Cookie(cookieName, sessionID + "," + version_number + "," + lm);
-		return retCookie;
+		return  new Cookie(cookieName, sessionID + "," + version_number + "," + lm);
 	}
     public static Cookie GetRequestCookie(String cookieName, Cookie[] cookies){
     	if(cookies == null) return null;
