@@ -2,10 +2,10 @@ package coreservlets;
 
 public class DataContents{
 	private int sessionID;
-	private int version_number;
+	private int versionNumber;
 	public DataContents(int sessionID, int version_number) {
 		this.sessionID = sessionID;
-		this.version_number = version_number;
+		this.versionNumber = version_number;
 	}
 	public int getSessionID() {
 		return sessionID;
@@ -13,11 +13,12 @@ public class DataContents{
 	public void setSessionID(int sessionID) {
 		this.sessionID = sessionID;
 	}
-	public int getVersion_number() {
-		return version_number;
+	public int getVersionNumber() {
+		return versionNumber;
 	}
-	public void setVersion_number(int version_number) {
-		this.version_number = version_number;
+	public void setVersionNumber(int versionNumber) {
+		this.versionNumber = versionNumber;
 	}
+
 	
 }

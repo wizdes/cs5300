@@ -4,11 +4,11 @@ import coreservlets.DataContents;
 
 public class UserContents extends DataContents {
 	private String message = new String();
-	private long time_in_secs = 0;
-	public UserContents(int sessionID, int version_number, String message, long time_in_secs){
-		super(sessionID, version_number);
+	private long timeInSeconds = 0;
+	public UserContents(int sessionID, int versionNumber, String message, long timeInSeconds){
+		super(sessionID, versionNumber);
 		this.message = message;
-		this.time_in_secs = time_in_secs;
+		this.timeInSeconds = timeInSeconds;
 	}
 	public String getMessage() {
 		return message;
@@ -16,11 +16,11 @@ public class UserContents extends DataContents {
 	public void setMessage(String message) {
 		this.message = message;
 	}
-	public long getTime_in_secs() {
-		return time_in_secs;
+	public long getTimeInSeconds() {
+		return timeInSeconds;
 	}
-	public void setTime_in_secs(long time_in_secs) {
-		this.time_in_secs = time_in_secs;
+	public void setTimeInSeconds(long timeInSeconds) {
+		this.timeInSeconds = timeInSeconds;
 	}
 	
 }
