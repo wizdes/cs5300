@@ -75,7 +75,7 @@ public class MsgCookieServlet extends HttpServlet {
 		
 		long expiration_date = System.currentTimeMillis()/1000 + (long)time_out_secs;
 		UserContents insertNew = new UserContents(sessionID, 0, DefaultMessage, expiration_date);
-		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName, counter, 0, "");
+		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName, sessionID, 0, "");
 		resp.addCookie(retCookie);
 		
 		final ReentrantLock insertLock = new ReentrantLock();
@@ -135,7 +135,7 @@ public class MsgCookieServlet extends HttpServlet {
 	public void modState(int sessionID, int versionNum, String lm,
 			HttpServletResponse response, String msg) {
 		response.addCookie(SessionUtilities.createCookie(StandardCookieName, sessionID,versionNum + 1, lm));
-		UserContents uc = new UserContents(sessionID, versionNum + 1, lm,
+		UserContents uc = new UserContents(sessionID, versionNum + 1, new String(msg),
 				System.currentTimeMillis() / 1000 + (long) time_out_secs);
 		sessionState.put(sessionID, uc);
 	}
