@@ -38,6 +38,7 @@ public class GarbageCollectionThread extends Thread {
 	public void run() {
 		while (collect) { // This allows us to stop the thread if we need to
 			// Get the sessionState keys so we can walk the map
+			System.out.println("Collecting");
 			for (int sessionID : sessionState.keySet()) {
 				/** This is basically Test & Test & Set locking */
 				// Check if this value has expired, no need to get a lock if it
@@ -52,6 +53,7 @@ public class GarbageCollectionThread extends Thread {
 						removeLock.lock();
 						// Reread post lock
 						userContents = sessionState.get(sessionID);
+						System.out.println("Removing: " + sessionID);
 						if (userContents.getExpirationTime() < System
 								.currentTimeMillis() / 1000) {
 							// If it really is expired remove it and the lock

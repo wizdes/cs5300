@@ -181,10 +181,13 @@ public class MsgCookieServlet extends HttpServlet {
 			// We now process the request
 			boolean newCookie = processSession(request, sessionID, response);
 			
+			// If we need a new cookie (from a logout click), we go here
 			if(newCookie){
 				createCookie(request, out, response);
 				return;				
 			}
+			
+			System.out.println(sessionID + ":" + sessionState.get(sessionID).getVersionNumber());
 
 			// Print the page out to the browser
 			printWebsite(sessionState.get(sessionID).getMessage(), out,
@@ -241,6 +244,14 @@ public class MsgCookieServlet extends HttpServlet {
 		int versionNum = sessionState.get(sessionID).getVersionNumber();
 		String message = sessionState.get(sessionID).getMessage();
 		Enumeration<String> paramNames = request.getParameterNames();
+		
+		//this case is when there is nothing in the parameters and it has a session state
+		// this is the same behavior as a refresh button click
+		if(paramNames.hasMoreElements() == false){
+			modState(sessionID, versionNum, "", response, message);
+			return false;			
+		}
+		
 		// Walk the paramNames list
 		while (paramNames.hasMoreElements()) {
 			String paramName = paramNames.nextElement();
