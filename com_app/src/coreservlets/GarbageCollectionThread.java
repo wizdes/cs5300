@@ -13,13 +13,12 @@ public class GarbageCollectionThread extends Thread{
 	public GarbageCollectionThread(ConcurrentMap<Integer, UserContents> sessionState,
 			ConcurrentMap<Integer, ReentrantLock> sessionLocks){
 		this.sessionState=sessionState;
+		this.sessionLocks = sessionLocks;
 		setDaemon(true);
 		collect=true;
 	}
 	public void run(){
 		while(collect){
-			System.out.println("Collecting");
-			
 		    for(int sessionID: sessionState.keySet()){
 		    	UserContents val = sessionState.get(sessionID);
 		    	if(val.getTimeInSeconds() < System.currentTimeMillis()/1000){

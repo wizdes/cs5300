@@ -28,7 +28,7 @@ public class MsgCookieServlet extends HttpServlet {
 	
 	private int counter = 0;
 	private final String StandardCookieName = "CS5300PROJ1SESSION";
-	public final int time_out_secs = 5;
+	public final int time_out_secs = 200;
 	private GarbageCollectionThread garbageCollectionThread;
 	private final String DefaultMessage = "Default Message.";
 	 // This Happens Once and is Reused
@@ -40,14 +40,14 @@ public class MsgCookieServlet extends HttpServlet {
     }
 
     
-	void printWebsite(String msg, PrintWriter out, int sessionID, HttpServletRequest request){
+	void printWebsite(String msg, PrintWriter out, int sessionID, HttpServletRequest request, long expires){
 		out.print("<big><big><b>\n" + msg + "</b></big></big>\n");
 		out.print("<html>\n" +
     			"<body>\n" +
     			"<form method=GET action=\"msgcookieservlet\">" +
 				"<input type=text name=NewText size=30 maxlength=512>" +
 				"&nbsp;&nbsp;" +
-				"<input type=submit name=cmd value=Save>" +
+				"<input type=submit name=cmd value=Replace>" +
 				"&nbsp;&nbsp;" +
 				"</form>" +
 				"<form method=GET action=\"msgcookieservlet\">" +
@@ -59,7 +59,7 @@ public class MsgCookieServlet extends HttpServlet {
 				"</body>" +
 	    		"</html>");
 		out.print("Session on: " + request.getRemoteAddr() + ":" + request.getRemotePort() + "<br/>");
-		out.print("Expires " + new Date(sessionState.get(sessionID).getTimeInSeconds() * 1000));
+		out.print("Expires " + new Date(expires * 1000));
 
 	}
 	
@@ -83,7 +83,7 @@ public class MsgCookieServlet extends HttpServlet {
 			insertLock.lock();
 			sessionLocks.put(sessionID, insertLock);
 			sessionState.put(sessionID, insertNew);
-			printWebsite(DefaultMessage, out, sessionID, request );
+			printWebsite(DefaultMessage, out, sessionID, request, expiration_date);
 		}
 		finally{
 			insertLock.unlock();
@@ -105,6 +105,8 @@ public class MsgCookieServlet extends HttpServlet {
 			return;
 		}
 		
+		
+		
 		int sessionID = cookieContents.getSessionID();
 		ReentrantLock SessionLock = sessionLocks.get(sessionID);
 		if(SessionLock == null){
@@ -121,6 +123,8 @@ public class MsgCookieServlet extends HttpServlet {
 				return;			
 			}
 			process_session(request, sessionID, response);
+			printWebsite(sessionState.get(sessionID).getMessage(), out, sessionID, request, 
+					sessionState.get(sessionID).getTimeInSeconds());
 		}
 		finally{
 			SessionLock.unlock();
@@ -143,6 +147,8 @@ public class MsgCookieServlet extends HttpServlet {
 		 while (paramNames.hasMoreElements()) {
 			 String paramName = paramNames.nextElement();
 			 String[] paramValues = request.getParameterValues(paramName);
+			 
+			 System.out.println(paramName);
 	
 			 if (paramValues.length == 1 && paramName.equals("REF")) {
 				 modState(sessionID, versionNum, "", response, msg);
@@ -151,6 +157,7 @@ public class MsgCookieServlet extends HttpServlet {
 	
 			 if (paramValues.length == 1 && paramName.equals("NewText")) {
 				 String paramValue = paramValues[0]; 
+				 System.out.println(paramValue);
 				 modState(sessionID, versionNum, "", response, paramValue);
 			 break;
 			 }
