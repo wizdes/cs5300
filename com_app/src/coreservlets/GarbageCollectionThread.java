@@ -2,28 +2,37 @@ package coreservlets;
 
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import coreservlets.UserContents;
 
 public class GarbageCollectionThread extends Thread{
-	private ConcurrentMap<Integer, UserContents> session_info;
+	private ConcurrentMap<Integer, UserContents> sessionState;
+	private ConcurrentMap<Integer, ReentrantLock> sessionLocks;
 	boolean collect;
-	public GarbageCollectionThread(ConcurrentMap<Integer, UserContents> session_info){
-		this.session_info=session_info;
+	public GarbageCollectionThread(ConcurrentMap<Integer, UserContents> sessionState,
+			ConcurrentMap<Integer, ReentrantLock> sessionLocks){
+		this.sessionState=sessionState;
 		setDaemon(true);
 		collect=true;
 	}
 	public void run(){
 		while(collect){
 			System.out.println("Collecting");
-		    for(Iterator<ConcurrentMap.Entry<Integer, UserContents>> iterator 
-		    		= session_info.entrySet().iterator();
-		    		iterator.hasNext();){
-		    	ConcurrentMap.Entry<Integer, UserContents> entry = iterator.next();
-			    	if((entry.getValue()).getTimeInSeconds() < System.currentTimeMillis()/1000){
-						System.out.println("removing "+entry.getValue().getMessage());
-			    		iterator.remove();
-			    	}
+			
+		    for(int sessionID: sessionState.keySet()){
+		    	UserContents val = sessionState.get(sessionID);
+		    	if(val.getTimeInSeconds() < System.currentTimeMillis()/1000){
+		    		ReentrantLock removeLock = sessionLocks.get(sessionID);
+		    		try{
+		    			removeLock.lock();
+		    			sessionState.remove(sessionID);
+		    			sessionLocks.remove(sessionID);
+		    		}
+		    		finally{
+		    			removeLock.unlock();
+		    		}
+		    	}
 		    }
 		    try {
 				Thread.sleep(4000);
