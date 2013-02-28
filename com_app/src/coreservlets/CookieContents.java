@@ -1,19 +1,41 @@
 package coreservlets;
 
+/**
+ * This object extends DataContents to contain cookie information; it adds
+ * locationMetadata.
+ */
 public class CookieContents extends DataContents {
-	private String lm;
+	private String locationMetadata;
 
-	public CookieContents(int sessionID, int version_number, String lm){
-		super(sessionID, version_number);
-		this.lm =  lm;
+	/**
+	 * Constructs a CookieContents object
+	 * 
+	 * @param sessionID
+	 *            The sessionID of the cookie
+	 * @param versionNumber
+	 *            The versionNumber of the cookie
+	 * @param locationMetadata
+	 *            The locationMetadata of the cookie
+	 */
+	public CookieContents(int sessionID, int versionNumber,
+			String locationMetadata) {
+		super(sessionID, versionNumber);
+		this.locationMetadata = locationMetadata;
 	}
 
-	public String getLm() {
-		return lm;
+	/**
+	 * @return locationMetadata
+	 */
+	public String getLocationMetadata() {
+		return locationMetadata;
 	}
 
-	public void setLm(String lm) {
-		this.lm = lm;
+	/**
+	 * @param locationMetadata
+	 *            Sets locationMetadata to locationMetadata
+	 */
+	public void setLocationMetadata(String locationMetadata) {
+		this.locationMetadata = locationMetadata;
 	}
-	
+
 }

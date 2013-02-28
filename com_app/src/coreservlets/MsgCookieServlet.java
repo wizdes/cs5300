@@ -1,12 +1,8 @@
 package coreservlets;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -20,154 +16,254 @@ import javax.servlet.http.HttpServletResponse;
 
 @WebServlet("/msgcookieservlet")
 public class MsgCookieServlet extends HttpServlet {
-	//Synchronization Variables
-	private final ReentrantLock CreationLock = new ReentrantLock(true);	//Used when creating cookies to protect session id, etc
-	private final ConcurrentMap<Integer, ReentrantLock> sessionLocks = new ConcurrentHashMap<>();	//Locks for a given user/session
-	private final ConcurrentMap<Integer, UserContents> sessionState = new ConcurrentHashMap<>();		//User contents
-	
-	
+	private static final long serialVersionUID = -7173084749627424244L;
+	private final ReentrantLock counterLock = new ReentrantLock(true); // Used
+																		// when
+																		// creating
+																		// cookies
+																		// to
+																		// protect
+																		// session
+																		// id,
+																		// etc
+	private final ConcurrentMap<Integer, ReentrantLock> sessionLocks = new ConcurrentHashMap<>(); // Locks
+																									// for
+																									// a
+																									// given
+																									// user/session
+	private final ConcurrentMap<Integer, UserContents> sessionState = new ConcurrentHashMap<>(); // User
+																									// contents
 	private int counter = 0;
 	private final String StandardCookieName = "CS5300PROJ1SESSION";
-	public final int time_out_secs = 5;
+	public final int timeOutSeconds = 5;
 	private GarbageCollectionThread garbageCollectionThread;
 	private final String DefaultMessage = "Default Message.";
-	 // This Happens Once and is Reused
-    public void init(ServletConfig config) throws ServletException
-    {
-    	super.init(config); 
-    	garbageCollectionThread = new GarbageCollectionThread(sessionState, sessionLocks);
-    	garbageCollectionThread.start();
-    }
 
-    
-	void printWebsite(String msg, PrintWriter out, int sessionID, HttpServletRequest request, long expires){
-		out.print("<big><big><b>\n" + msg + "</b></big></big>\n");
-		out.print("<html>\n" +
-    			"<body>\n" +
-    			"<form method=GET action=\"msgcookieservlet\">" +
-				"<input type=text name=NewText size=30 maxlength=512>" +
-				"&nbsp;&nbsp;" +
-				"<input type=submit name=cmd value=Replace>" +
-				"&nbsp;&nbsp;" +
-				"</form>" +
-				"<form method=GET action=\"msgcookieservlet\">" +
-				"<input type=submit name=REF value=Refresh>" +
-				"</form>" +
-				"<form method=GET action=\"msgcookieservlet\">" +
-				"<input type=submit name=ESC value=LogOut>" +
-				"</form>" +
-				"</body>" +
-	    		"</html>");
-		out.print("Session on: " + request.getRemoteAddr() + ":" + request.getRemotePort() + "<br/>");
-		out.print("Expires " + new Date(expires * 1000));
+	/**
+	 * This init is called the first time the servlet is launched
+	 */
+	public void init(ServletConfig config) throws ServletException {
+		super.init(config);
+		garbageCollectionThread = new GarbageCollectionThread(sessionState,
+				sessionLocks);
+		garbageCollectionThread.start();
+	}
+
+	/**
+	 * This function writes the actual webpage out to the browser
+	 * 
+	 * @param message
+	 *            The message to send to the user
+	 * @param browserPrintWriter
+	 *            The PrintWriter that will write to the brower socket
+	 * @param sessionID
+	 *            The session ID of the user
+	 * @param request
+	 *            The request that resulted in this page
+	 * @param expiresInSeconds
+	 *            The expiration time of the cookie
+	 */
+	private void printWebsite(String message, PrintWriter browserPrintWriter,
+			int sessionID, HttpServletRequest request, long expiresInSeconds) {
+		browserPrintWriter.print("<big><big><b>\n" + message
+				+ "</b></big></big>\n");
+		browserPrintWriter.print("<html>\n" + "<body>\n"
+				+ "<form method=GET action=\"msgcookieservlet\">"
+				+ "<input type=text name=NewText size=30 maxlength=512>"
+				+ "&nbsp;&nbsp;" + "<input type=submit name=cmd value=Replace>"
+				+ "&nbsp;&nbsp;" + "</form>"
+				+ "<form method=GET action=\"msgcookieservlet\">"
+				+ "<input type=submit name=REF value=Refresh>" + "</form>"
+				+ "<form method=GET action=\"msgcookieservlet\">"
+				+ "<input type=submit name=ESC value=LogOut>" + "</form>"
+				+ "</body>" + "</html>");
+		browserPrintWriter.print("Session on: " + request.getRemoteAddr() + ":"
+				+ request.getRemotePort() + "<br/>");
+		browserPrintWriter
+				.print("Expires " + new Date(expiresInSeconds * 1000));
 
 	}
-	
-	void createCookie(HttpServletRequest request, PrintWriter out, HttpServletResponse resp){
-		int sessionID = -1;
-		try{
-			CreationLock.lock();
+
+	/**
+	 * Creates a cookie and
+	 * 
+	 * @param request
+	 *            The request that caused this cookie
+	 * @param browserPrintWriter
+	 *            The PrintWriter on the brower socket
+	 * @param response
+	 *            The object that controls the response headers
+	 */
+	public void createCookie(HttpServletRequest request,
+			PrintWriter browserPrintWriter, HttpServletResponse response) {
+		int sessionID = -1; // Invalid session ID
+		try {
+			// We get the counter, we need to do so with a lock first so that it
+			// cannot change from under us
+			counterLock.lock();
 			sessionID = counter++;
+		} finally {
+			// Unlock the counter
+			counterLock.unlock();
 		}
-		finally{
-			CreationLock.unlock();
-		}
-		
-		long expiration_date = System.currentTimeMillis()/1000 + (long)time_out_secs;
-		UserContents insertNew = new UserContents(sessionID, 0, DefaultMessage, expiration_date);
-		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName, sessionID, 0, "");
-		resp.addCookie(retCookie);
-		
+
+		long expiration_date = System.currentTimeMillis() / 1000
+				+ (long) timeOutSeconds;
+		UserContents insertNew = new UserContents(sessionID, 0, DefaultMessage,
+				expiration_date);
+		// Build the cookie and add it to the response header
+		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
+				sessionID, 0, "");
+		response.addCookie(retCookie);
+
+		// We grab a lock in order to put the new session into our sessionState
+		// map
 		final ReentrantLock insertLock = new ReentrantLock();
-		try{
+		try {
 			insertLock.lock();
 			sessionLocks.put(sessionID, insertLock);
 			sessionState.put(sessionID, insertNew);
-			printWebsite(DefaultMessage, out, sessionID, request, expiration_date);
-		}
-		finally{
+			printWebsite(DefaultMessage, browserPrintWriter, sessionID,
+					request, expiration_date);
+		} finally {
+			// We unlock the lock
 			insertLock.unlock();
 		}
 	}
-	
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest
+	 * , javax.servlet.http.HttpServletResponse)
+	 */
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
 
+		// Parse the cookie into our custom CookieContents object
 		CookieContents cookieContents = SessionUtilities
 				.readCookie(SessionUtilities.GetRequestCookie(
 						StandardCookieName, request.getCookies()));
-		
-		if(cookieContents == null){
+
+		// If the cookie didn't exist create it
+		if (cookieContents == null) {
 			createCookie(request, out, response);
 			return;
 		}
-		
-		
-		
+
+		// If it did exist but we do not know about it, create a new cookie
+		// Note: this happens usually when the user has a cookie which has been
+		// garbage collected
 		int sessionID = cookieContents.getSessionID();
 		ReentrantLock SessionLock = sessionLocks.get(sessionID);
-		if(SessionLock == null){
+		if (SessionLock == null) {
 			createCookie(request, out, response);
-			return;			
+			return;
 		}
-		try{
+		try {
+			// If a lock exists, we grab it
 			SessionLock.lock();
 			UserContents session_info = sessionState.get(sessionID);
-			
-			if(session_info == null 
-					|| session_info.getTimeInSeconds() < System.currentTimeMillis()/1000){
+
+			// If we do not have session data, or it has expired, we create a
+			// new cookie
+			if (session_info == null
+					|| session_info.getExpirationTime() < System
+							.currentTimeMillis() / 1000) {
 				createCookie(request, out, response);
-				return;			
+				return;
 			}
-			process_session(request, sessionID, response);
-			printWebsite(sessionState.get(sessionID).getMessage(), out, sessionID, request, 
-					sessionState.get(sessionID).getTimeInSeconds());
-		}
-		finally{
+
+			// We now process the request
+			processSession(request, sessionID, response);
+
+			// Print the page out to the browser
+			printWebsite(sessionState.get(sessionID).getMessage(), out,
+					sessionID, request, sessionState.get(sessionID)
+							.getExpirationTime());
+		} finally {
+			// Unlock the session
 			SessionLock.unlock();
 		}
 		return;
 	}
 
-	public void modState(int sessionID, int versionNum, String lm,
-			HttpServletResponse response, String msg) {
-		response.addCookie(SessionUtilities.createCookie(StandardCookieName, sessionID,versionNum + 1, lm));
-		UserContents uc = new UserContents(sessionID, versionNum + 1, new String(msg),
-				System.currentTimeMillis() / 1000 + (long) time_out_secs);
-		sessionState.put(sessionID, uc);
+	/**
+	 * Modifies the session state to new information
+	 * 
+	 * @param sessionID
+	 *            The session ID to set
+	 * @param versionNumber
+	 *            The version number to set
+	 * @param locationMetadata
+	 *            The locationMetadata to set
+	 * @param response
+	 *            The response header to add the cookie to
+	 * @param message
+	 *            The message to add to the UserContents object
+	 */
+	private void modState(int sessionID, int versionNumber,
+			String locationMetadata, HttpServletResponse response,
+			String message) {
+		// Set the new cookie and session information
+		response.addCookie(SessionUtilities.createCookie(StandardCookieName,
+				sessionID, versionNumber + 1, locationMetadata));
+		UserContents userContents = new UserContents(sessionID,
+				versionNumber + 1, new String(message),
+				System.currentTimeMillis() / 1000 + (long) timeOutSeconds);
+		// We don't need to lock here because we always call it in a lock
+		sessionState.put(sessionID, userContents);
 	}
-	
-	void process_session(HttpServletRequest request, int sessionID, HttpServletResponse response){
-		int versionNum =  sessionState.get(sessionID).getVersionNumber();
-		String msg = sessionState.get(sessionID).getMessage();
+
+	/**
+	 * Parse the request information, and perform an action
+	 * 
+	 * @param request
+	 *            The request to parse
+	 * @param sessionID
+	 *            The session ID of the current session
+	 * @param response
+	 *            The response to add headers to
+	 */
+	private void processSession(HttpServletRequest request, int sessionID,
+			HttpServletResponse response) {
+		// processSession is always called inside a lock, so we don not need to
+		// lock
+		int versionNum = sessionState.get(sessionID).getVersionNumber();
+		String message = sessionState.get(sessionID).getMessage();
 		Enumeration<String> paramNames = request.getParameterNames();
-		 while (paramNames.hasMoreElements()) {
-			 String paramName = paramNames.nextElement();
-			 String[] paramValues = request.getParameterValues(paramName);
-			 
-			 System.out.println(paramName);
-	
-			 if (paramValues.length == 1 && paramName.equals("REF")) {
-				 modState(sessionID, versionNum, "", response, msg);
-				 break;
-			 }
-	
-			 if (paramValues.length == 1 && paramName.equals("NewText")) {
-				 String paramValue = paramValues[0]; 
-				 System.out.println(paramValue);
-				 modState(sessionID, versionNum, "", response, paramValue);
-			 break;
-			 }
-	
-			 if (paramValues.length == 1 && paramName.equals("ESC")) { //Logout/Remove
-				 sessionState.get(sessionID).setTimeInSeconds(System.currentTimeMillis()/1000 - 1);				 
-			 //lock remove
-			 break;
-			 }
-		 }
+		// Walk the paramNames list
+		while (paramNames.hasMoreElements()) {
+			String paramName = paramNames.nextElement();
+			String[] paramValues = request.getParameterValues(paramName);
+
+			// Refresh
+			if (paramValues.length == 1 && paramName.equals("REF")) {
+				modState(sessionID, versionNum, "", response, message);
+				break;
+			}
+
+			// Set new text
+			if (paramValues.length == 1 && paramName.equals("NewText")) {
+				String paramValue = paramValues[0];
+				System.out.println(paramValue);
+				modState(sessionID, versionNum, "", response, paramValue);
+				break;
+			}
+
+			// Logout
+			if (paramValues.length == 1 && paramName.equals("ESC")) {
+				// Again this function is always called in a lock, so we don't
+				// need a new one
+				sessionState.get(sessionID).setExpirationTime(
+						System.currentTimeMillis() / 1000 - 1);
+				break;
+			}
+		}
 		return;
 	}
 }
