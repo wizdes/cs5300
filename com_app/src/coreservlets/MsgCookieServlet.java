@@ -44,16 +44,16 @@ public class MsgCookieServlet extends HttpServlet {
 		out.print("<big><big><b>\n" + msg + "</b></big></big>\n");
 		out.print("<html>\n" +
     			"<body>\n" +
-    			"<form method=GET action=\"my-response\">" +
+    			"<form method=GET action=\"msgcookieservlet\">" +
 				"<input type=text name=NewText size=30 maxlength=512>" +
 				"&nbsp;&nbsp;" +
 				"<input type=submit name=cmd value=Save>" +
 				"&nbsp;&nbsp;" +
 				"</form>" +
-				"<form method=GET action=\"my-response\">" +
+				"<form method=GET action=\"msgcookieservlet\">" +
 				"<input type=submit name=REF value=Refresh>" +
 				"</form>" +
-				"<form method=GET action=\"my-response\">" +
+				"<form method=GET action=\"msgcookieservlet\">" +
 				"<input type=submit name=ESC value=LogOut>" +
 				"</form>" +
 				"</body>" +
