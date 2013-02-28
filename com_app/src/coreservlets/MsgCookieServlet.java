@@ -69,7 +69,7 @@ public class MsgCookieServlet extends HttpServlet {
 				+ "</b></big></big>\n");
 		browserPrintWriter.print("<html>\n" + "<body>\n"
 				+ "<form method=GET action=\"msgcookieservlet\">"
-				+ "<input type=text name=NewText size=30 maxlength=512>"
+				+ "<input type=text name=NewText size=30 maxlength=400>"
 				+ "&nbsp;&nbsp;" + "<input type=submit name=cmd value=Replace>"
 				+ "&nbsp;&nbsp;" + "</form>"
 				+ "<form method=GET action=\"msgcookieservlet\">"
