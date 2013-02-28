@@ -265,7 +265,7 @@ public class MsgCookieServlet extends HttpServlet {
 
 			// Set new text
 			if (paramValues.length == 1 && paramName.equals("NewText")) {
-				String paramValue = paramValues[0];
+				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","");
 				System.out.println(paramValue);
 				modState(sessionID, versionNum, "", response, paramValue);
 				return false;
