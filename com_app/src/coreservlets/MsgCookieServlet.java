@@ -65,6 +65,7 @@ public class MsgCookieServlet extends HttpServlet {
 	 */
 	private void printWebsite(String message, PrintWriter browserPrintWriter,
 			int sessionID, HttpServletRequest request, long expiresInSeconds) {
+		
 		browserPrintWriter.print("<big><big><b>\n" + message
 				+ "</b></big></big>\n");
 		browserPrintWriter.print("<html>\n" + "<body>\n"
@@ -81,8 +82,7 @@ public class MsgCookieServlet extends HttpServlet {
 				+ request.getRemotePort() + "<br/>");
 		browserPrintWriter
 				.print("Expires " + new Date(expiresInSeconds * 1000));
-
-	}
+		}
 
 	/**
 	 * Creates a cookie and
@@ -179,7 +179,12 @@ public class MsgCookieServlet extends HttpServlet {
 			}
 
 			// We now process the request
-			processSession(request, sessionID, response);
+			boolean newCookie = processSession(request, sessionID, response);
+			
+			if(newCookie){
+				createCookie(request, out, response);
+				return;				
+			}
 
 			// Print the page out to the browser
 			printWebsite(sessionState.get(sessionID).getMessage(), out,
@@ -229,7 +234,7 @@ public class MsgCookieServlet extends HttpServlet {
 	 * @param response
 	 *            The response to add headers to
 	 */
-	private void processSession(HttpServletRequest request, int sessionID,
+	private boolean processSession(HttpServletRequest request, int sessionID,
 			HttpServletResponse response) {
 		// processSession is always called inside a lock, so we don not need to
 		// lock
@@ -244,7 +249,7 @@ public class MsgCookieServlet extends HttpServlet {
 			// Refresh
 			if (paramValues.length == 1 && paramName.equals("REF")) {
 				modState(sessionID, versionNum, "", response, message);
-				break;
+				return false;
 			}
 
 			// Set new text
@@ -252,7 +257,7 @@ public class MsgCookieServlet extends HttpServlet {
 				String paramValue = paramValues[0];
 				System.out.println(paramValue);
 				modState(sessionID, versionNum, "", response, paramValue);
-				break;
+				return false;
 			}
 
 			// Logout
@@ -261,9 +266,9 @@ public class MsgCookieServlet extends HttpServlet {
 				// need a new one
 				sessionState.get(sessionID).setExpirationTime(
 						System.currentTimeMillis() / 1000 - 1);
-				break;
+				return true;
 			}
 		}
-		return;
+		return false;
 	}
 }
