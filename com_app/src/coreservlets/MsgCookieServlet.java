@@ -28,7 +28,7 @@ public class MsgCookieServlet extends HttpServlet {
 	
 	private int counter = 0;
 	private final String StandardCookieName = "CS5300PROJ1SESSION";
-	public final int time_out_secs = 200;
+	public final int time_out_secs = 5;
 	private GarbageCollectionThread garbageCollectionThread;
 	private final String DefaultMessage = "Default Message.";
 	 // This Happens Once and is Reused
