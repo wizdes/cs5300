@@ -1,13 +1,15 @@
 package network_layer;
 
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.util.ArrayList;
 
 public class UDPNetwork implements NetworkInterface{
 
 	@Override
-	public void send(byte[] buffer, String destAddr, int destPort) {
+	public void send(byte[] buffer, InetAddress destAddr, int destPort) {
 		// TODO Auto-generated method stub
+		DatagramPacket sendPkt = new DatagramPacket(buffer, buffer.length, destAddr, destPort);
 		
 	}
 
@@ -18,7 +20,7 @@ public class UDPNetwork implements NetworkInterface{
 	}
 
 	@Override
-	public DatagramPacket sendAndWait(byte[] buffer, String destAddr,
+	public DatagramPacket sendAndWait(byte[] buffer, InetAddress destAddr,
 			int destPort) {
 		// TODO Auto-generated method stub
 		return null;
@@ -31,7 +33,7 @@ public class UDPNetwork implements NetworkInterface{
 	}
 
 	@Override
-	public void broadcast(byte[] buffer, ArrayList<String> destAddresses,
+	public void broadcast(byte[] buffer, ArrayList<InetAddress> destAddresses,
 			ArrayList<Integer> destPorts) {
 		// TODO Auto-generated method stub
 		
