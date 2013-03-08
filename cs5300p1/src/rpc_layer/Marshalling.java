@@ -7,7 +7,7 @@ public class Marshalling {
 	 * @param objs Objects which properlly implement toString. (ex: Integer, String, Double, custom class, etc)
 	 * @return Byte array containing objects encoded with UTF-8 and Base64.
 	 */
-	public byte[] marshall(Object[] objs){
+	static public byte[] marshall(Object[] objs){
 		return null;
 	}
 	/**
@@ -15,7 +15,7 @@ public class Marshalling {
 	 * @param bytes Byte array containing objects encoded with UTF-8 and Base64.
 	 * @return Objects which properlly implement toString. (ex: Integer, String, Double, custom class, etc)
 	 */
-	public Object[] unmarshall(byte[] bytes){
+	static public Object[] unmarshall(byte[] bytes){
 		//This may return String[] instead.
 		return null;
 	}

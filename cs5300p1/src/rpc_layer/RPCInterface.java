@@ -1,5 +1,6 @@
 package rpc_layer;
 
+import java.net.DatagramPacket;
 import java.util.Set;
 
 public interface RPCInterface {	
@@ -9,7 +10,7 @@ public interface RPCInterface {
 	 * @param version Version number of the requested session.
 	 * @return Pair <found_version, data> or "not found"
 	 */
-	public String sessionRead(String SID, String version);
+	public byte[] sessionRead(String SID, String version);
 	
 	/**
 	 * 
@@ -19,7 +20,7 @@ public interface RPCInterface {
 	 * @param discardTime Time after which the stored session may be garbage collected.
 	 * @return An acknowledgement.
 	 */
-	public String sessionWrite(String SID, String version, String data, String discardTime);
+	public byte[] sessionWrite(String SID, String version, String data, String discardTime);
 	
 	/**
 	 * 
@@ -27,7 +28,7 @@ public interface RPCInterface {
 	 * @param version Version number of the requested session.
 	 * @return An acknowledgement.
 	 */
-	public String sessionDelete(String SID, String version);
+	public byte[] sessionDelete(String SID, String version);
 	
 	
 	/**
@@ -35,5 +36,5 @@ public interface RPCInterface {
 	 * @param sz Max number of members to be returned.
 	 * @return subset of the mbrSet of the called server, chosen uniformly at random without replacement.
 	 */
-	public Set<String> getMembers(int sz);
+	public byte[] getMembers(int sz);
 }

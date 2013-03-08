@@ -1,30 +1,89 @@
 package rpc_layer;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.Set;
+import rpc_layer.Marshalling;
 
-public class ServerStubs implements RPCInterface{
+public class ServerStubs extends Thread implements RPCInterface {
+	DatagramSocket rpcSocket = null;
+	
+	//returns the port number to be used on client stubs
+	public int ServerStubs(){
+		int serverPort = -1;
+		try {
+			rpcSocket = new DatagramSocket();
+			serverPort = rpcSocket.getLocalPort();
+		} catch (SocketException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return serverPort;
+	}
+	
+	public void run(){
+		while(true){
+			try {
+				byte[] inBuf = new byte[512];
+				DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
+				rpcSocket.receive(recvPkt);
+				InetAddress returnAddr = recvPkt.getAddress();
+				int returnPort = recvPkt.getPort();
+				Object[] elements = Marshalling.unmarshall(inBuf);
+				operationEnums operationCode = (operationEnums) elements[1];
+				byte[] outBuf = null;
+				switch(operationCode){
+					case operationSESSIONREAD:
+						outBuf = sessionRead((String)elements[2], (String)elements[3]);
+						break;
+					case operationSESSIONWRITE:
+						outBuf = sessionWrite((String)elements[2], (String)elements[3], (String)elements[4], (String)elements[5]);
+						break;
+					case operationDELETE:
+						outBuf = sessionDelete((String)elements[2], (String)elements[3]);
+						break;
+					case operationGETMEMBERS:
+						outBuf = getMembers((Integer)elements[2]);
+						break;
+					default:
+						break;						
+				}
+				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, returnPort);
+				rpcSocket.send(sendPkt);
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+	}
+
 
 	@Override
-	public String sessionRead(String SID, String version) {
+	public byte[] sessionRead(String SID, String version) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public String sessionWrite(String SID, String version, String data,
+	public byte[] sessionWrite(String SID, String version, String data,
 			String discardTime) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public String sessionDelete(String SID, String version) {
+	public byte[] sessionDelete(String SID, String version) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Set<String> getMembers(int sz) {
+	public byte[] getMembers(int sz) {
 		// TODO Auto-generated method stub
 		return null;
 	}
