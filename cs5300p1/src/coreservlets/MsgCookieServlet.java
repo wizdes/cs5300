@@ -26,12 +26,12 @@ public class MsgCookieServlet extends HttpServlet {
 																		// session
 																		// id,
 																		// etc
-	private final ConcurrentMap<Integer, ReentrantLock> sessionLocks = new ConcurrentHashMap<>(); // Locks
+	private final ConcurrentMap<Integer, ReentrantLock> sessionLocks = new ConcurrentHashMap<Integer, ReentrantLock>(); // Locks
 																									// for
 																									// a
 																									// given
 																									// user/session
-	private final ConcurrentMap<Integer, UserContents> sessionState = new ConcurrentHashMap<>(); // User
+	private final ConcurrentMap<Integer, UserContents> sessionState = new ConcurrentHashMap<Integer, UserContents>(); // User
 																									// contents
 	private int counter = 0;
 	private final String StandardCookieName = "CS5300PROJ1SESSION";

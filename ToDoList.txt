@@ -1,9 +1,0 @@
-1) Given a cookie and the request type, modify the cookie/HTML/hashmap - Yi *DONE*
-2) Get Version numbers to work the way the are supposed to - Yi *DONE*
-3) Garbage collection (either thread or every request) on expired stuff - Max
-4) Synchronize parts that need to be atomic - Max
-5) Sanitize our inputs (have a function on a string) - Max 
-6) Review stuff (Synchronized functions, Concurrent Hashmaps) - Patrick
-7) Testing - Max
-8) Make sure Comment code - Patrick
-9) Documentation (Read the spec for details)- Max/Patrick
