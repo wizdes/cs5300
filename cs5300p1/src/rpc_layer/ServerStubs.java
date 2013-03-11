@@ -6,6 +6,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
 
 import coreservlets.UserContents;
@@ -39,123 +40,119 @@ public class ServerStubs extends Thread{
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
 				Object[] elements = Marshalling.unmarshall(inBuf);
-				operationEnums operationCode = (operationEnums) elements[1];
-				byte[] outBuf = null;
+				operationEnums operationCode = operationEnums.valueOf((String) elements[1]);
+				
+				String[] outBufStr = null;
 				switch(operationCode){
 					case operationSESSIONREAD:
-						outBuf = sessionRead((String)elements[2], (String)elements[3]);
+						outBufStr = sessionRead((String)elements[2], (String)elements[3]);
 						break;
 					case operationSESSIONWRITE:
-						outBuf = sessionWrite((String)elements[2], (String)elements[3], (String)elements[4], (String)elements[5]);
+						outBufStr = sessionWrite((String)elements[2], (String)elements[3], (String)elements[4], (String)elements[5]);
 						break;
 					case operationDELETE:
-						outBuf = sessionDelete((String)elements[2], (String)elements[3]);
+						outBufStr = sessionDelete((String)elements[2], (String)elements[3]);
 						break;
 					case operationGETMEMBERS:
-						outBuf = getMembers((Integer)elements[2]);
+						outBufStr = getMembers((Integer)elements[2]);
 						break;
 					default:
 						break;						
 				}
+				String[] tempList = new String[outBufStr.length + 1];
+				tempList[0] = (String) elements[0];
+				System.arraycopy(outBufStr, 0, tempList, 1, outBufStr.length);
+				
+				byte[] outBuf = Marshalling.marshall(tempList);
+				
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, returnAddr, returnPort);
 				rpcSocket.send(sendPkt);
 				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
 		}
+	}
+	
+	public String[] constructNotFoundResponse(){
+		String[] notFoundResp = new String[1];
+		notFoundResp[0] = "Not found";
+		return notFoundResp;	
 	}
 
 
-	public byte[] sessionRead(String SID, String version) {
+	public String[] sessionRead(String SID, String version) {
 		ReentrantLock SessionLock = myData.sessionLocks.get(SID);
-		SessionLock.lock();
+		if(SessionLock == null) return constructNotFoundResponse();
+
 		try {
+			SessionLock.lock();
 			UserContents session_info = myData.sessionState.get(SID);
 			if(session_info == null){
-				SessionLock.unlock();
-				String[] notFoundResp = new String[1];
-				notFoundResp[0] = "Not found";
-				return Marshalling.marshall(notFoundResp);		
+				return constructNotFoundResponse();
 			}
 			else{
 				String[] foundResp = new String[2];
 				foundResp[0] = Integer.toString(session_info.getVersionNumber());
 				foundResp[1] = session_info.getMessage();
-				return Marshalling.marshall(foundResp);
+				return foundResp;
 			}
 			
-		}catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
 		}
 		finally{
 			SessionLock.unlock();
 		}
-		
-		return null;
 	}
 
-	public byte[] sessionWrite(String SID, String version, String data,
-			String discardTime) {
+	public String[] sessionWrite(String SID, String version, String data, String discardTime) {
 		ReentrantLock SessionLock = myData.sessionLocks.get(SID);
-		SessionLock.lock();
+		if(SessionLock == null){
+			//create a new one
+			myData.createNewSession(SID, Integer.parseInt(version), data, Long.parseLong(discardTime));
+		}
 		try {
+			SessionLock.lock();
 			UserContents session_info = myData.sessionState.get(SID);
+			
 			if(session_info == null){
-				SessionLock.unlock();
-				String[] notFoundResp = new String[1];
-				notFoundResp[0] = "Not found";
-				return Marshalling.marshall(notFoundResp);		
-			}
-			else{
-				session_info.setMessage(data);
-				session_info.setExpirationTime(Long.parseLong(discardTime));
-				String[] writtenResp = new String[1];
-				writtenResp[0] = "Written";
-				return Marshalling.marshall(writtenResp);		
+				//create a new one				
+				myData.createNewSession(SID, Integer.parseInt(version), data, Long.parseLong(discardTime));
 			}
 			
-		}catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
+			session_info.setMessage(data);
+			session_info.setExpirationTime(Long.parseLong(discardTime));
+			String[] writtenResp = new String[1];
+			writtenResp[0] = "Written";
+			return writtenResp;		
 		}
 		finally{
 			SessionLock.unlock();
 		}
-		
-		return null;
 	}
 
-	public byte[] sessionDelete(String SID, String version) {
+	public String[] sessionDelete(String SID, String version) {
 		ReentrantLock SessionLock = myData.sessionLocks.get(SID);
-		SessionLock.lock();
+		if(SessionLock == null) return constructNotFoundResponse();
 		try {
+			SessionLock.lock();
 			UserContents session_info = myData.sessionState.get(SID);
 			if(session_info == null){
-				SessionLock.unlock();
-				String[] notFoundResp = new String[1];
-				notFoundResp[0] = "Not found";
-	
-					return Marshalling.marshall(notFoundResp);		
+				return constructNotFoundResponse();
 			}
 			else{
 				session_info.setExpirationTime(System.currentTimeMillis() / 1000);
 				String[] writtenResp = new String[1];
 				writtenResp[0] = "Deleted";
-				return Marshalling.marshall(writtenResp);	
+				return writtenResp;
 			}
 			
-		}catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
 		}
 		finally{
 			SessionLock.unlock();
 		}
-		
-		return null;
 	}
 
-	public byte[] getMembers(int sz) {
+	public String[] getMembers(int sz) {
 		// TODO Auto-generated method stub
 		return null;
 	}

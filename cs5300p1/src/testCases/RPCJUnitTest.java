@@ -24,9 +24,15 @@ public class RPCJUnitTest {
 		
 		DestinationAddressList dest = new DestinationAddressList();
 		dest.addDestAddress(InetAddress.getLocalHost(), serverStub.getServerPort());
-		
-		client.sessionRead("2_192.168.1.2", "8", dest);
-		client.sessionWrite("2_192.168.1.2", "8", "Hello Max and Patrick!", "dateVal");
+	
+		System.out.println("READING.");					
+		String[] resp = (String[]) Marshalling.unmarshall(client.sessionRead("2_192.168.1.2", "8", dest));
+		for(String s:resp){
+			System.out.println(s);
+		}
+
+		System.out.println("WRITING.");			
+		System.out.println(client.sessionWrite("2_192.168.1.2", "8", "Hello Max and Patrick!", "dateVal"));
 		
 	}
 }

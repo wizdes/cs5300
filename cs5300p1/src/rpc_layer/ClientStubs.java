@@ -74,7 +74,7 @@ public class ClientStubs implements RPCInterface{
 				//(so I don't have to put the timeout and do additional logic later)
 				InetAddress addr = dest.destAddr.get(i);
 				int portNum = dest.destPort.get(i);
-				DatagramPacket sendPkt = new DatagramPacket(outBuf, 512, addr, portNum);	
+				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, portNum);	
 				rpcSocket.send(sendPkt);
 			}
 			byte[] inBuf = new byte[maxPacketSize];
@@ -84,7 +84,7 @@ public class ClientStubs implements RPCInterface{
 				do{
 					recvPkt.setLength(inBuf.length);
 					rpcSocket.receive(recvPkt);
-					checkCallID = (Integer)(Marshalling.unmarshall(inBuf)[0]);
+					checkCallID = Integer.parseInt((String) (Marshalling.unmarshall(inBuf)[0]));
 				}
 				while(checkCallID != callID);
 			}
@@ -112,9 +112,9 @@ public class ClientStubs implements RPCInterface{
 	}
 
 	@Override
-	public byte[] sessionWrite(String SID, String version, String data,
-			String discardTime) {
+	public byte[] sessionWrite(String SID, String version, String data, String discardTime) {
 		Random r = new Random();
+		if(clientAddresses.size() == 0) return null;
 		int randomInt = r.nextInt(clientAddresses.size());
 		
 		DestinationAddressList dest = new DestinationAddressList();

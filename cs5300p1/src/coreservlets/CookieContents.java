@@ -17,7 +17,7 @@ public class CookieContents extends DataContents {
 	 * @param locationMetadata
 	 *            The locationMetadata of the cookie
 	 */
-	public CookieContents(int sessionID, int versionNumber,
+	public CookieContents(String sessionID, int versionNumber,
 			String locationMetadata) {
 		super(sessionID, versionNumber);
 		this.locationMetadata = locationMetadata;

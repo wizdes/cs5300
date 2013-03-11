@@ -10,12 +10,18 @@ public class Marshalling {
 	 * @return Byte array containing objects encoded with UTF-8 and Base64.
 	 * @throws UnsupportedEncodingException 
 	 */
-	static public byte[] marshall(Object[] objs) throws UnsupportedEncodingException{
+	static public byte[] marshall(Object[] objs){
 		String elt = "";
 		for(Object o:objs){
-			elt += o.toString() + "|";
+			elt += o.toString() + ":";
 		}
-		return elt.getBytes("UTF-8");
+		try {
+			return elt.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 	/**
 	 * RPC demarshalling function.
@@ -23,10 +29,17 @@ public class Marshalling {
 	 * @return Objects which properlly implement toString. (ex: Integer, String, Double, custom class, etc)
 	 * @throws UnsupportedEncodingException 
 	 */
-	static public Object[] unmarshall(byte[] bytes) throws UnsupportedEncodingException{
+	static public Object[] unmarshall(byte[] bytes){
 		//This may return String[] instead.
-		String s = new String(bytes, "US-ASCII");
-		String[] retArray = s.split("|");
+		String s;
+		try {
+			s = new String(bytes, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			return null;
+		}
+		
+		s = s.replace("\0", "");
+		String[] retArray = s.split(":");
 		return retArray;
 	}
 }
