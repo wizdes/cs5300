@@ -6,6 +6,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.Random;
 
 import rpc_layer.Marshalling;
 import rpc_layer.DestinationAddressList;
@@ -59,7 +60,7 @@ public class ClientStubs implements RPCInterface{
 	}
 	
 	public byte[] sessionAction(String SID, String version, String data,
-			String discardTime, int sz, operationEnums op) { 
+			String discardTime, int sz, operationEnums op, DestinationAddressList dest) { 
 		DatagramPacket recvPkt = null;
 		DatagramSocket rpcSocket = null;
 		try {
@@ -67,15 +68,12 @@ public class ClientStubs implements RPCInterface{
 
 			int callID = getUniqueCallID();
 			byte[] outBuf = Marshalling.marshall(createArrayObjects(callID, op, SID, version, data, discardTime, sz));
-			for(int i = 0; i < clientAddresses.size(); i++){
-				//THIS IS WRONG.
-				//SEND IT ONLY TO THE RELEVANT PEOPLE
-				//YOU CAN FIGURE THIS OUT FROM IPP_Primary, IPP_Backup (SID)
-				//MAKE AN IF STATEMENT TO CHECK THIS THE CLIENT ADDRESSES HERE
+			
+			for(int i = 0; i < dest.size(); i++){
 				//I PICKED SENDING TWO SESSIONREADS by doing this
 				//(so I don't have to put the timeout and do additional logic later)
-				InetAddress addr = clientAddresses.destAddr.get(i);
-				int portNum = clientAddresses.destPort.get(i);
+				InetAddress addr = dest.destAddr.get(i);
+				int portNum = dest.destPort.get(i);
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, 512, addr, portNum);	
 				rpcSocket.send(sendPkt);
 			}
@@ -98,10 +96,8 @@ public class ClientStubs implements RPCInterface{
 				//other error
 			}
 		} catch (SocketException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		finally{
@@ -111,24 +107,30 @@ public class ClientStubs implements RPCInterface{
 	}
 
 	@Override
-	public byte[] sessionRead(String SID, String version) { 
-		return sessionAction(SID, version, null, null, -1, operationEnums.operationSESSIONREAD);
+	public byte[] sessionRead(String SID, String version, DestinationAddressList dest) { 
+		return sessionAction(SID, version, null, null, -1, operationEnums.operationSESSIONREAD, dest);
 	}
 
 	@Override
 	public byte[] sessionWrite(String SID, String version, String data,
 			String discardTime) {
-		return sessionAction(SID, version, data, discardTime, -1, operationEnums.operationSESSIONWRITE);
+		Random r = new Random();
+		int randomInt = r.nextInt(clientAddresses.size());
+		
+		DestinationAddressList dest = new DestinationAddressList();
+		dest.addDestAddress(clientAddresses.destAddr.get(randomInt), clientAddresses.destPort.get(randomInt));
+		
+		return sessionAction(SID, version, data, discardTime, -1, operationEnums.operationSESSIONWRITE, dest);
 	}
 
 	@Override
-	public byte[] sessionDelete(String SID, String version) {
-		return sessionAction(SID, version, null, null, -1, operationEnums.operationDELETE);
+	public byte[] sessionDelete(String SID, String version, DestinationAddressList dest) {
+		return sessionAction(SID, version, null, null, -1, operationEnums.operationDELETE, dest);
 	}
 
 	@Override
-	public byte[] getMembers(int sz) {
-		return sessionAction(null, null, null, null, sz, operationEnums.operationGETMEMBERS);
+	public byte[] getMembers(int sz, DestinationAddressList dest) {
+		return sessionAction(null, null, null, null, sz, operationEnums.operationGETMEMBERS, dest);
 	}
 
 }

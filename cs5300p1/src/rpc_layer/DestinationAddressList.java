@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public class DestinationAddressList {
 	ArrayList<InetAddress> destAddr;
 	ArrayList<Integer> destPort;
-	public void DestinationAddressList(){
+	public DestinationAddressList(){
 		destAddr = new ArrayList<InetAddress>();
 		destPort = new ArrayList<Integer>();
 	}

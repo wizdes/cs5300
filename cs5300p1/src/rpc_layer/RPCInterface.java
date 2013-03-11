@@ -10,7 +10,7 @@ public interface RPCInterface {
 	 * @param version Version number of the requested session.
 	 * @return Pair <found_version, data> or "not found"
 	 */
-	public byte[] sessionRead(String SID, String version);
+	public byte[] sessionRead(String SID, String version, DestinationAddressList dest);
 	
 	/**
 	 * 
@@ -28,7 +28,7 @@ public interface RPCInterface {
 	 * @param version Version number of the requested session.
 	 * @return An acknowledgement.
 	 */
-	public byte[] sessionDelete(String SID, String version);
+	public byte[] sessionDelete(String SID, String version, DestinationAddressList dest);
 	
 	
 	/**
@@ -36,5 +36,5 @@ public interface RPCInterface {
 	 * @param sz Max number of members to be returned.
 	 * @return subset of the mbrSet of the called server, chosen uniformly at random without replacement.
 	 */
-	public byte[] getMembers(int sz);
+	public byte[] getMembers(int sz, DestinationAddressList dest);
 }
