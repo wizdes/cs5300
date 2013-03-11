@@ -6,24 +6,28 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Set;
+
+import data_layer.SessionData;
 import rpc_layer.Marshalling;
 
 public class ServerStubs extends Thread implements RPCInterface {
 	DatagramSocket rpcSocket = null;
+	SessionData myData = null;
 	
 	//returns the port number to be used on client stubs
-	public int ServerStubs(){
-		int serverPort = -1;
+	public ServerStubs(SessionData data){
+		myData = data;
 		try {
 			rpcSocket = new DatagramSocket();
-			serverPort = rpcSocket.getLocalPort();
 		} catch (SocketException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return serverPort;
 	}
 	
+	public int getServerPort(){
+		return rpcSocket.getLocalPort();
+	}
 	public void run(){
 		while(true){
 			try {

@@ -15,6 +15,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import rpc_layer.ClientStubs;
+import rpc_layer.ServerStubs;
+
 @WebServlet("/msgcookieservlet")
 public class MsgCookieServlet extends HttpServlet {
 	private static final long serialVersionUID = -7173084749627424244L;
@@ -24,13 +27,25 @@ public class MsgCookieServlet extends HttpServlet {
 	public final int timeOutSeconds = 60;
 	private GarbageCollectionThread garbageCollectionThread;
 	private final String DefaultMessage = "Default Message.";
-	private final SessionData myData = new SessionData();
+	
+	// all data goes through sessionData, although there are no functions in here
+	// the objects are public. This should change
+	private SessionData myData = null;
+	
+	//creates a client and server
+	private ClientStubs client = null;
+	private ServerStubs server = null;
 
 	/**
 	 * This init is called the first time the servlet is launched
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+		// this sets a unique clientID per host
+		client.initClient(server.getServerPort());
+		myData = new SessionData();
+		client = new ClientStubs();
+		server = new ServerStubs(myData);
 		garbageCollectionThread = new GarbageCollectionThread(myData.sessionState,
 				myData.sessionLocks);
 		garbageCollectionThread.start();
@@ -135,12 +150,29 @@ public class MsgCookieServlet extends HttpServlet {
 		CookieContents cookieContents = SessionUtilities
 				.readCookie(SessionUtilities.GetRequestCookie(
 						StandardCookieName, request.getCookies()));
+		
+		//TODO: Check if the cookie exists
 
 		// If the cookie didn't exist create it
 		if (cookieContents == null) {
 			createCookie(request, out, response);
+			//TODO: also replicate the data
 			return;
 		}
+		
+		//TODO: if the cookie exists and it is on my own server:
+		//TODO: if it is valid (version number)
+		//TODO: handle and replicate the data properly
+		//TODO: if it is invalid, check the latest location as if the cookie exists and it is on another server
+		//TODO: if the cookie exists and is on another server:
+		//TODO: do a sessionRead
+		//TODO: handle it on my own server
+		//TODO: handle and replicate the data properly
+		//TODO: return 
+		
+		//TODO: "HANDLE AND REPLICATE THE DATA PROPERLY"
+		//TODO: write it in my own session data and send it out somewhere if(refresh and replace) 
+		//TODO: if it's a logout, then flush it from my own and all the primary/backup from the cookie
 
 		// If it did exist but we do not know about it, create a new cookie
 		// Note: this happens usually when the user has a cookie which has been

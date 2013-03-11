@@ -12,6 +12,4 @@ public class SessionData {
 	public final ConcurrentMap<Integer, ReentrantLock> sessionLocks = new ConcurrentHashMap<Integer, ReentrantLock>();
 	// User contents
 	public final ConcurrentMap<Integer, UserContents> sessionState = new ConcurrentHashMap<Integer, UserContents>(); 
-
-
 }

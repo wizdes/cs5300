@@ -72,7 +72,8 @@ public class ClientStubs implements RPCInterface{
 				//SEND IT ONLY TO THE RELEVANT PEOPLE
 				//YOU CAN FIGURE THIS OUT FROM IPP_Primary, IPP_Backup (SID)
 				//MAKE AN IF STATEMENT TO CHECK THIS THE CLIENT ADDRESSES HERE
-				//I PICKED SENDING TWO SESSIONREADS (so I don't have to put the timeout and do additional logic later)
+				//I PICKED SENDING TWO SESSIONREADS by doing this
+				//(so I don't have to put the timeout and do additional logic later)
 				InetAddress addr = clientAddresses.destAddr.get(i);
 				int portNum = clientAddresses.destPort.get(i);
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, 512, addr, portNum);	
