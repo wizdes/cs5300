@@ -9,9 +9,11 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import exceptions.UDPPacketTooBigException;
+
 public class UDPNetwork implements NetworkInterface{
-	private static final int MAX_UDP_PKT_SIZE = 512;	//Bytes
-	DatagramSocket socket = null;
+	public static final int MAX_UDP_PKT_SIZE = 512;	//Bytes
+	private DatagramSocket socket = null;
 	public UDPNetwork(int port){
 		try {
 			socket = new DatagramSocket(port);
@@ -20,45 +22,41 @@ public class UDPNetwork implements NetworkInterface{
 		}
 	}
 	@Override
-	public boolean send(byte[] buffer, InetAddress destAddr, int destPort) {
-		assert buffer.length <= MAX_UDP_PKT_SIZE;
-		
-		DatagramPacket pkt = new DatagramPacket(buffer, buffer.length, destAddr, destPort);
-		try {
-			socket.send(pkt);
-			return true;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
+	public void send(byte[] buffer, InetAddress destAddr, int destPort) throws UDPPacketTooBigException, IOException{
+		if( buffer.length > MAX_UDP_PKT_SIZE){
+			throw new UDPPacketTooBigException();
 		}
+		
+		DatagramPacket packet = new DatagramPacket(buffer, buffer.length, destAddr, destPort);
+		socket.send(packet);
 	}
 
 	@Override
 	public DatagramPacket receive(int callID) {
 		//ASSUMPTION: CALL ID IS FIRST 4 BYTES 
 		byte[] buffer = new byte[MAX_UDP_PKT_SIZE];
-		DatagramPacket pkt = new DatagramPacket(buffer, buffer.length);
+		DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
 		int recvCallID;
 		try {
 			do {
-				pkt.setLength(buffer.length);
-				socket.receive(pkt);
+				packet.setLength(buffer.length);
+				socket.receive(packet);
 				recvCallID = ByteBuffer.wrap(buffer).getInt();
 			} while (recvCallID != callID);
 		} catch(InterruptedIOException iioe) {
 		    // timeout 
-		    pkt = null;
+		    packet = null;
 		}catch (IOException e) { 
 			e.printStackTrace();
 			return null;
 		}
-		return pkt;
+		return packet;
 	}
 
 	@Override
 	public DatagramPacket sendAndWait(byte[] buffer, InetAddress destAddr,
-			int destPort, int callID) {
+			int destPort, int callID)  throws UDPPacketTooBigException, IOException{
 		send(buffer, destAddr, destPort);
 		return receive(callID);
 	}
@@ -71,11 +69,11 @@ public class UDPNetwork implements NetworkInterface{
 
 	@Override
 	public void broadcast(byte[] buffer, ArrayList<InetAddress> destAddresses,
-			ArrayList<Integer> destPorts) {
+			ArrayList<Integer> destPorts) throws UDPPacketTooBigException, IOException{
 		assert destAddresses.size() == destPorts.size();
 		
 		for(int i = 0; i < destAddresses.size(); i++){
-			boolean successfullySend = send(buffer, destAddresses.get(i), destPorts.get(i));
+			send(buffer, destAddresses.get(i), destPorts.get(i));
 		}
 	}
 
