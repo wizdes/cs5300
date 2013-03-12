@@ -1,11 +1,13 @@
 package coreservlets;
 
+import rpc_layer.DestinationAddressList;
+
 /**
  * This object extends DataContents to contain cookie information; it adds
  * locationMetadata.
  */
 public class CookieContents extends DataContents {
-	private String locationMetadata;
+	private DestinationAddressList destinationAddressList;
 
 	/**
 	 * Constructs a CookieContents object
@@ -17,25 +19,28 @@ public class CookieContents extends DataContents {
 	 * @param locationMetadata
 	 *            The locationMetadata of the cookie
 	 */
-	public CookieContents(String sessionID, int versionNumber,
-			String locationMetadata) {
+	public CookieContents(String sessionID, int versionNumber) {
 		super(sessionID, versionNumber);
-		this.locationMetadata = locationMetadata;
+		destinationAddressList=null;
 	}
 
 	/**
 	 * @return locationMetadata
 	 */
 	public String getLocationMetadata() {
-		return locationMetadata;
+		String output="";
+		for (int i=0; i<destinationAddressList.size(); i++){
+			output+=destinationAddressList.getDestAddr(i)+":"+destinationAddressList.getDestPort(i);
+		}
+		return output;
 	}
 
 	/**
-	 * @param locationMetadata
-	 *            Sets locationMetadata to locationMetadata
+	 * @param destinationAddressList
+	 *            Sets destinationAddressList to destinationAddressList
 	 */
-	public void setLocationMetadata(String locationMetadata) {
-		this.locationMetadata = locationMetadata;
+	public void setDestinationAddressList(DestinationAddressList destinationAddressList) {
+		this.destinationAddressList = destinationAddressList;
 	}
 
 }
