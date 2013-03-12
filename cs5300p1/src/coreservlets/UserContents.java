@@ -21,7 +21,7 @@ public class UserContents extends DataContents {
 	 * @param expirationTime
 	 *            The expiration time of the UserContents object
 	 */
-	public UserContents(int sessionID, int versionNumber, String message,
+	public UserContents(String sessionID, int versionNumber, String message,
 			long expirationTime) {
 		super(sessionID, versionNumber);
 		this.message = message;

@@ -10,24 +10,24 @@ import coreservlets.UserContents;
  * minute, walks the sessionState map, and removes all expired sessions.
  */
 public class GarbageCollectionThread extends Thread {
-	private ConcurrentMap<Integer, UserContents> sessionState;
-	private ConcurrentMap<Integer, ReentrantLock> sessionLocks;
+	private ConcurrentMap<String, UserContents> sessionState;
+	private ConcurrentMap<String, ReentrantLock> sessionLocks;
 	private boolean collect;
 	private final static long sleepTime = 60 * 1000;
 
 	/**
 	 * The constructs a GarbageCollectionThread object
 	 * 
-	 * @param sessionState
+	 * @param sessionState2
 	 *            The map of session IDs to their session states
-	 * @param sessionLocks
+	 * @param sessionLocks2
 	 *            The map of session IDs to their locks
 	 */
 	public GarbageCollectionThread(
-			ConcurrentMap<Integer, UserContents> sessionState,
-			ConcurrentMap<Integer, ReentrantLock> sessionLocks) {
-		this.sessionState = sessionState;
-		this.sessionLocks = sessionLocks;
+			ConcurrentMap<String, UserContents> sessionState2,
+			ConcurrentMap<String, ReentrantLock> sessionLocks2) {
+		this.sessionState = sessionState2;
+		this.sessionLocks = sessionLocks2;
 		setDaemon(true); // Let's us close without needing the thread to end
 		collect = true;
 	}
@@ -39,7 +39,7 @@ public class GarbageCollectionThread extends Thread {
 		while (collect) { // This allows us to stop the thread if we need to
 			// Get the sessionState keys so we can walk the map
 			System.out.println("Collecting");
-			for (int sessionID : sessionState.keySet()) {
+			for (String sessionID : sessionState.keySet()) {
 				/** This is basically Test & Test & Set locking */
 				// Check if this value has expired, no need to get a lock if it
 				// has not

@@ -21,7 +21,7 @@ public class SessionUtilities {
 	 *            The locationMetadata of the cookie
 	 * @return The new cookie
 	 */
-	public static Cookie createCookie(String cookieName, int sessionID,
+	public static Cookie createCookie(String cookieName, String sessionID,
 			int versionNumber, String locationMetadata) {
 		return new Cookie(cookieName, sessionID + "," + versionNumber + ","
 				+ locationMetadata);
@@ -59,7 +59,7 @@ public class SessionUtilities {
 			return null;
 		String[] contents = cookie.getValue().split(",");
 		CookieContents cookieContents = new CookieContents(
-				Integer.parseInt(contents[0]), Integer.parseInt(contents[1]),
+				contents[0], Integer.parseInt(contents[1]),
 				"");
 		cookieContents.setLocationMetadata((contents.length > 2) ? contents[2]
 				: "");

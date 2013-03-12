@@ -4,26 +4,26 @@ package coreservlets;
  * This class stores the session objects and their version numbers
  */
 public class DataContents {
-	private int sessionID;
+	private String sessionID;
 	private int versionNumber;
 
 	/**
 	 * Constructor for DataContents
 	 * 
-	 * @param sessionID
+	 * @param sessionID2
 	 *            The sessionID of this DataContents Object
 	 * @param versionNumber
 	 *            The version number of this DataContents Object
 	 */
-	public DataContents(int sessionID, int versionNumber) {
-		this.sessionID = sessionID;
+	public DataContents(String sessionID2, int versionNumber) {
+		this.sessionID = sessionID2;
 		this.versionNumber = versionNumber;
 	}
 
 	/**
 	 * @return seesionID
 	 */
-	public int getSessionID() {
+	public String getSessionID() {
 		return sessionID;
 	}
 
@@ -31,7 +31,7 @@ public class DataContents {
 	 * @param sessionID
 	 *            Sets sessionID to sessionID
 	 */
-	public void setSessionID(int sessionID) {
+	public void setSessionID(String sessionID) {
 		this.sessionID = sessionID;
 	}
 

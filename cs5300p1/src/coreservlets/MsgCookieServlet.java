@@ -1,5 +1,6 @@
 package coreservlets;
 
+import data_layer.SessionData;
 import java.io.*;
 import java.util.Date;
 import java.util.Enumeration;
@@ -14,38 +15,39 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import rpc_layer.ClientStubs;
+import rpc_layer.ServerStubs;
+
 @WebServlet("/msgcookieservlet")
 public class MsgCookieServlet extends HttpServlet {
 	private static final long serialVersionUID = -7173084749627424244L;
-	private final ReentrantLock counterLock = new ReentrantLock(true); // Used
-																		// when
-																		// creating
-																		// cookies
-																		// to
-																		// protect
-																		// session
-																		// id,
-																		// etc
-	private final ConcurrentMap<Integer, ReentrantLock> sessionLocks = new ConcurrentHashMap<>(); // Locks
-																									// for
-																									// a
-																									// given
-																									// user/session
-	private final ConcurrentMap<Integer, UserContents> sessionState = new ConcurrentHashMap<>(); // User
-																									// contents
+	// Used creating cookies to protect session IDs
 	private int counter = 0;
 	private final String StandardCookieName = "CS5300PROJ1SESSION";
 	public final int timeOutSeconds = 60;
 	private GarbageCollectionThread garbageCollectionThread;
 	private final String DefaultMessage = "Default Message.";
+	
+	// all data goes through sessionData, although there are no functions in here
+	// the objects are public. This should change
+	private SessionData myData = null;
+	
+	//creates a client and server
+	private ClientStubs client = null;
+	private ServerStubs server = null;
 
 	/**
 	 * This init is called the first time the servlet is launched
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		garbageCollectionThread = new GarbageCollectionThread(sessionState,
-				sessionLocks);
+		// this sets a unique clientID per host
+		client.initClient(server.getServerPort());
+		myData = new SessionData();
+		client = new ClientStubs();
+		server = new ServerStubs(myData);
+		garbageCollectionThread = new GarbageCollectionThread(myData.sessionState,
+				myData.sessionLocks);
 		garbageCollectionThread.start();
 	}
 
@@ -64,7 +66,7 @@ public class MsgCookieServlet extends HttpServlet {
 	 *            The expiration time of the cookie
 	 */
 	private void printWebsite(String message, PrintWriter browserPrintWriter,
-			int sessionID, HttpServletRequest request, long expiresInSeconds) {
+			String sessionID, HttpServletRequest request, long expiresInSeconds) {
 		
 		browserPrintWriter.print("<big><big><b>\n" + message
 				+ "</b></big></big>\n");
@@ -96,21 +98,18 @@ public class MsgCookieServlet extends HttpServlet {
 	 */
 	public void createCookie(HttpServletRequest request,
 			PrintWriter browserPrintWriter, HttpServletResponse response) {
-		int sessionID = -1; // Invalid session ID
+		String sessionID = "Servername" + "-1"; // Invalid session ID
 		try {
 			// We get the counter, we need to do so with a lock first so that it
 			// cannot change from under us
-			counterLock.lock();
-			sessionID = counter++;
+			myData.counterLock.lock();
+			sessionID = "Servername" + Integer.toString(counter++);
 		} finally {
 			// Unlock the counter
-			counterLock.unlock();
+			myData.counterLock.unlock();
 		}
 
-		long expiration_date = System.currentTimeMillis() / 1000
-				+ (long) timeOutSeconds;
-		UserContents insertNew = new UserContents(sessionID, 0, DefaultMessage,
-				expiration_date);
+		long expiration_date = System.currentTimeMillis() / 1000 + (long) timeOutSeconds;
 		// Build the cookie and add it to the response header
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
 				sessionID, 0, "");
@@ -118,17 +117,8 @@ public class MsgCookieServlet extends HttpServlet {
 
 		// We grab a lock in order to put the new session into our sessionState
 		// map
-		final ReentrantLock insertLock = new ReentrantLock();
-		try {
-			insertLock.lock();
-			sessionLocks.put(sessionID, insertLock);
-			sessionState.put(sessionID, insertNew);
-			printWebsite(DefaultMessage, browserPrintWriter, sessionID,
-					request, expiration_date);
-		} finally {
-			// We unlock the lock
-			insertLock.unlock();
-		}
+		myData.createNewSession(sessionID, 0, DefaultMessage, expiration_date);
+		printWebsite(DefaultMessage, browserPrintWriter, sessionID, request, expiration_date);
 	}
 
 	/*
@@ -148,18 +138,35 @@ public class MsgCookieServlet extends HttpServlet {
 		CookieContents cookieContents = SessionUtilities
 				.readCookie(SessionUtilities.GetRequestCookie(
 						StandardCookieName, request.getCookies()));
+		
+		//TODO: Check if the cookie exists
 
 		// If the cookie didn't exist create it
 		if (cookieContents == null) {
 			createCookie(request, out, response);
+			//TODO: also replicate the data
 			return;
 		}
+		
+		//TODO: if the cookie exists and it is on my own server:
+		//TODO: if it is valid (version number)
+		//TODO: handle and replicate the data properly
+		//TODO: if it is invalid, check the latest location as if the cookie exists and it is on another server
+		//TODO: if the cookie exists and is on another server:
+		//TODO: do a sessionRead
+		//TODO: handle it on my own server
+		//TODO: handle and replicate the data properly
+		//TODO: return 
+		
+		//TODO: "HANDLE AND REPLICATE THE DATA PROPERLY"
+		//TODO: write it in my own session data and send it out somewhere if(refresh and replace) 
+		//TODO: if it's a logout, then flush it from my own and all the primary/backup from the cookie
 
 		// If it did exist but we do not know about it, create a new cookie
 		// Note: this happens usually when the user has a cookie which has been
 		// garbage collected
-		int sessionID = cookieContents.getSessionID();
-		ReentrantLock SessionLock = sessionLocks.get(sessionID);
+		String sessionID = cookieContents.getSessionID();
+		ReentrantLock SessionLock = myData.sessionLocks.get(sessionID);
 		if (SessionLock == null) {
 			createCookie(request, out, response);
 			return;
@@ -167,7 +174,7 @@ public class MsgCookieServlet extends HttpServlet {
 		try {
 			// If a lock exists, we grab it
 			SessionLock.lock();
-			UserContents session_info = sessionState.get(sessionID);
+			UserContents session_info = myData.sessionState.get(sessionID);
 
 			// If we do not have session data, or it has expired, we create a
 			// new cookie
@@ -187,11 +194,11 @@ public class MsgCookieServlet extends HttpServlet {
 				return;				
 			}
 			
-			System.out.println(sessionID + ":" + sessionState.get(sessionID).getVersionNumber());
+			System.out.println(sessionID + ":" + myData.sessionState.get(sessionID).getVersionNumber());
 
 			// Print the page out to the browser
-			printWebsite(sessionState.get(sessionID).getMessage(), out,
-					sessionID, request, sessionState.get(sessionID)
+			printWebsite(myData.sessionState.get(sessionID).getMessage(), out,
+					sessionID, request, myData.sessionState.get(sessionID)
 							.getExpirationTime());
 		} finally {
 			// Unlock the session
@@ -214,7 +221,7 @@ public class MsgCookieServlet extends HttpServlet {
 	 * @param message
 	 *            The message to add to the UserContents object
 	 */
-	private void modState(int sessionID, int versionNumber,
+	private void modState(String sessionID, int versionNumber,
 			String locationMetadata, HttpServletResponse response,
 			String message) {
 		// Set the new cookie and session information
@@ -224,7 +231,7 @@ public class MsgCookieServlet extends HttpServlet {
 				versionNumber + 1, new String(message),
 				System.currentTimeMillis() / 1000 + (long) timeOutSeconds);
 		// We don't need to lock here because we always call it in a lock
-		sessionState.put(sessionID, userContents);
+		myData.sessionState.put(sessionID, userContents);
 	}
 
 	/**
@@ -237,12 +244,12 @@ public class MsgCookieServlet extends HttpServlet {
 	 * @param response
 	 *            The response to add headers to
 	 */
-	private boolean processSession(HttpServletRequest request, int sessionID,
+	private boolean processSession(HttpServletRequest request, String sessionID,
 			HttpServletResponse response) {
 		// processSession is always called inside a lock, so we don not need to
 		// lock
-		int versionNum = sessionState.get(sessionID).getVersionNumber();
-		String message = sessionState.get(sessionID).getMessage();
+		int versionNum = myData.sessionState.get(sessionID).getVersionNumber();
+		String message = myData.sessionState.get(sessionID).getMessage();
 		Enumeration<String> paramNames = request.getParameterNames();
 		
 		//this case is when there is nothing in the parameters and it has a session state
@@ -275,7 +282,7 @@ public class MsgCookieServlet extends HttpServlet {
 			if (paramValues.length == 1 && paramName.equals("ESC")) {
 				// Again this function is always called in a lock, so we don't
 				// need a new one
-				sessionState.get(sessionID).setExpirationTime(
+				myData.sessionState.get(sessionID).setExpirationTime(
 						System.currentTimeMillis() / 1000 - 1);
 				return true;
 			}
