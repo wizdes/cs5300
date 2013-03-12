@@ -24,10 +24,10 @@ public class GarbageCollectionThread extends Thread {
 	 *            The map of session IDs to their locks
 	 */
 	public GarbageCollectionThread(
-			ConcurrentMap<String, UserContents> sessionState2,
-			ConcurrentMap<String, ReentrantLock> sessionLocks2) {
-		this.sessionState = sessionState2;
-		this.sessionLocks = sessionLocks2;
+			ConcurrentMap<String, UserContents> sessionState,
+			ConcurrentMap<String, ReentrantLock> sessionLocks) {
+		this.sessionState = sessionState;
+		this.sessionLocks = sessionLocks;
 		setDaemon(true); // Let's us close without needing the thread to end
 		collect = true;
 	}
