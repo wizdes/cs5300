@@ -20,7 +20,7 @@ public interface RPCInterface {
 	 * @param discardTime Time after which the stored session may be garbage collected.
 	 * @return An acknowledgement.
 	 */
-	public byte[] sessionWrite(String SID, String version, String data, String discardTime);
+	public byte[] sessionWrite(String SID, String version, String data, String discardTime,int serverIndex);
 	
 	/**
 	 * 

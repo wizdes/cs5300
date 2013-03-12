@@ -32,7 +32,7 @@ public class RPCJUnitTest {
 		}
 
 		System.out.println("WRITING.");			
-		System.out.println(client.sessionWrite("2_192.168.1.2", "8", "Hello Max and Patrick!", "dateVal"));
+		System.out.println(client.sessionWrite("2_192.168.1.2", "8", "Hello Max and Patrick!", "dateVal",0));
 		
 	}
 }

@@ -1,5 +1,5 @@
 package rpc_layer;
 
-public enum operationEnums {
+public enum OperationEnums {
 	operationSESSIONREAD, operationSESSIONWRITE, operationDELETE, operationGETMEMBERS	
 }

@@ -9,6 +9,8 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
 
+import network_layer.UDPNetwork;
+
 import coreservlets.UserContents;
 
 import data_layer.SessionData;
@@ -31,16 +33,19 @@ public class ServerStubs extends Thread{
 	public int getServerPort(){
 		return rpcSocket.getLocalPort();
 	}
+	public String getLocationMetaData(){
+		return rpcSocket.getLocalAddress()+":"+rpcSocket.getLocalPort();
+	}
 	public void run(){
 		while(true){
 			try {
-				byte[] inBuf = new byte[512];
+				byte[] inBuf = new byte[UDPNetwork.MAX_UDP_PKT_SIZE];
 				DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 				rpcSocket.receive(recvPkt);
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
 				Object[] elements = Marshalling.unmarshall(inBuf);
-				operationEnums operationCode = operationEnums.valueOf((String) elements[1]);
+				OperationEnums operationCode = OperationEnums.valueOf((String) elements[1]);
 				
 				String[] outBufStr = null;
 				switch(operationCode){
