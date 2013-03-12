@@ -1,6 +1,11 @@
 package coreservlets;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import javax.servlet.http.Cookie;
+
+import rpc_layer.DestinationAddressList;
 
 /**
  * A list of static classes to do the low level work of cookie creation,
@@ -53,16 +58,26 @@ public class SessionUtilities {
 	 * @param cookie
 	 *            The cookie to read
 	 * @return A new CookieContents object that represents the data in cookie
+	 * @throws UnknownHostException 
 	 */
-	public static CookieContents readCookie(Cookie cookie) {
+	public static CookieContents readCookie(Cookie cookie) throws NumberFormatException, UnknownHostException{
 		if (cookie == null)
 			return null;
 		String[] contents = cookie.getValue().split(",");
 		CookieContents cookieContents = new CookieContents(
-				contents[0], Integer.parseInt(contents[1]),
-				"");
-		cookieContents.setLocationMetadata((contents.length > 2) ? contents[2]
-				: "");
+				contents[0], Integer.parseInt(contents[1]));
+		if(contents.length > 2){
+			DestinationAddressList destinationAddressList = new DestinationAddressList();
+			for (int i=2; i<contents.length; i++){
+				parseLocationMetadata(contents[i],destinationAddressList);
+			}
+			cookieContents.setDestinationAddressList(destinationAddressList);
+		}
 		return cookieContents;
+	}
+	
+	public static void parseLocationMetadata(String locationMetadata,DestinationAddressList destinationAddressList) throws NumberFormatException, UnknownHostException{
+		String[] IPandPort =locationMetadata.split(":");
+		destinationAddressList.addDestAddress(InetAddress.getByName(IPandPort[0]), Integer.parseInt(IPandPort[1]));
 	}
 }
