@@ -4,7 +4,6 @@ import data_layer.SessionData;
 import java.io.*;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.servlet.ServletConfig;
@@ -109,16 +108,23 @@ public class MsgCookieServlet extends HttpServlet {
 			myData.counterLock.unlock();
 		}
 
-		long expiration_date = System.currentTimeMillis() / 1000 + (long) timeOutSeconds;
+		long expirationInSeconds = System.currentTimeMillis() / 1000 + (long) timeOutSeconds;
 		// Build the cookie and add it to the response header
+		String clientResponseString="";
+		int backupServerIndex=-1;
+		while(!clientResponseString.contains("Written")){
+			backupServerIndex = client.getRandomServerIndex();
+			clientResponseString=new String(client.sessionWrite(sessionID, "0", "", ""+expirationInSeconds, backupServerIndex));
+		} 
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
-				sessionID, 0, "");
+				sessionID, 0, server.getLocationMetaData()+","+client.getDestAddr(backupServerIndex)+":"+client.getDestPort(backupServerIndex));
 		response.addCookie(retCookie);
 
 		// We grab a lock in order to put the new session into our sessionState
 		// map
-		myData.createNewSession(sessionID, 0, DefaultMessage, expiration_date);
-		printWebsite(DefaultMessage, browserPrintWriter, sessionID, request, expiration_date);
+		myData.createNewSession(sessionID, 0, DefaultMessage, expirationInSeconds);
+		
+		printWebsite(DefaultMessage, browserPrintWriter, sessionID, request, expirationInSeconds);
 	}
 
 	/*
