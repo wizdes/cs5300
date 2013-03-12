@@ -8,15 +8,17 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Random;
 
+import network_layer.UDPNetwork;
+
 import rpc_layer.Marshalling;
 import rpc_layer.DestinationAddressList;
-import rpc_layer.operationEnums;
+import rpc_layer.OperationEnums;
 
 public class ClientStubs implements RPCInterface{
 	
-	int callIDCounter = 0;
-	DestinationAddressList clientAddresses;
-	int maxPacketSize = 512;
+	private int callIDCounter;
+	private DestinationAddressList clientAddresses;
+	private Random random = new Random();
 	
 	public void initClient(int rpc_server_port){
 		callIDCounter = 10000 * rpc_server_port;
@@ -33,14 +35,14 @@ public class ClientStubs implements RPCInterface{
 		}
 	}
 	
-	public Object[] createArrayObjects(Integer callID, operationEnums op, String SID, String version,
+	public Object[] createArrayObjects(int callID, OperationEnums op, String SID, String version,
 			String data, String discardTime, int sz){
 		Object[] retArray = null;
-		if(op == operationEnums.operationGETMEMBERS){
+		if(op == OperationEnums.operationGETMEMBERS){
 			retArray = new Object[1];
 			retArray[0] = new Integer(sz);
 		}
-		else if(op == operationEnums.operationSESSIONWRITE){
+		else if(op == OperationEnums.operationSESSIONWRITE){
 			retArray = new Object[6];
 			retArray[0] = callID;
 			retArray[1] = op;
@@ -60,7 +62,7 @@ public class ClientStubs implements RPCInterface{
 	}
 	
 	public byte[] sessionAction(String SID, String version, String data,
-			String discardTime, int sz, operationEnums op, DestinationAddressList dest) { 
+			String discardTime, int sz, OperationEnums op, DestinationAddressList dest) { 
 		DatagramPacket recvPkt = null;
 		DatagramSocket rpcSocket = null;
 		try {
@@ -72,12 +74,12 @@ public class ClientStubs implements RPCInterface{
 			for(int i = 0; i < dest.size(); i++){
 				//I PICKED SENDING TWO SESSIONREADS by doing this
 				//(so I don't have to put the timeout and do additional logic later)
-				InetAddress addr = dest.destAddr.get(i);
-				int portNum = dest.destPort.get(i);
+				InetAddress addr = dest.getDestAddr(i);
+				int portNum = dest.getDestPort(i);
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, portNum);	
 				rpcSocket.send(sendPkt);
 			}
-			byte[] inBuf = new byte[maxPacketSize];
+			byte[] inBuf = new byte[UDPNetwork.MAX_UDP_PKT_SIZE];
 			recvPkt = new DatagramPacket(inBuf, inBuf.length);
 			try{
 				Integer checkCallID = 0;
@@ -108,29 +110,35 @@ public class ClientStubs implements RPCInterface{
 
 	@Override
 	public byte[] sessionRead(String SID, String version, DestinationAddressList dest) { 
-		return sessionAction(SID, version, null, null, -1, operationEnums.operationSESSIONREAD, dest);
+		return sessionAction(SID, version, null, null, -1, OperationEnums.operationSESSIONREAD, dest);
 	}
 
 	@Override
-	public byte[] sessionWrite(String SID, String version, String data, String discardTime) {
-		Random r = new Random();
+	public byte[] sessionWrite(String SID, String version, String data, String discardTime, int serverIndex) {
 		if(clientAddresses.size() == 0) return null;
-		int randomInt = r.nextInt(clientAddresses.size());
-		
 		DestinationAddressList dest = new DestinationAddressList();
-		dest.addDestAddress(clientAddresses.destAddr.get(randomInt), clientAddresses.destPort.get(randomInt));
+		dest.addDestAddress(clientAddresses.getDestAddr(serverIndex), clientAddresses.getDestPort(serverIndex));
 		
-		return sessionAction(SID, version, data, discardTime, -1, operationEnums.operationSESSIONWRITE, dest);
+		return sessionAction(SID, version, data, discardTime, -1, OperationEnums.operationSESSIONWRITE, dest);
 	}
 
+	public int getRandomServerIndex(){
+		return random.nextInt(clientAddresses.size());
+	}
+	public InetAddress getDestAddr(int index){
+		return clientAddresses.getDestAddr(index);
+	}
+	public int getDestPort(int index){
+		return clientAddresses.getDestPort(index);
+	}
 	@Override
 	public byte[] sessionDelete(String SID, String version, DestinationAddressList dest) {
-		return sessionAction(SID, version, null, null, -1, operationEnums.operationDELETE, dest);
+		return sessionAction(SID, version, null, null, -1, OperationEnums.operationDELETE, dest);
 	}
 
 	@Override
 	public byte[] getMembers(int sz, DestinationAddressList dest) {
-		return sessionAction(null, null, null, null, sz, operationEnums.operationGETMEMBERS, dest);
+		return sessionAction(null, null, null, null, sz, OperationEnums.operationGETMEMBERS, dest);
 	}
 
 }
