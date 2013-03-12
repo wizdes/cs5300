@@ -10,13 +10,13 @@ public class DataContents {
 	/**
 	 * Constructor for DataContents
 	 * 
-	 * @param sessionID2
+	 * @param sessionID
 	 *            The sessionID of this DataContents Object
 	 * @param versionNumber
 	 *            The version number of this DataContents Object
 	 */
-	public DataContents(String sessionID2, int versionNumber) {
-		this.sessionID = sessionID2;
+	public DataContents(String sessionID, int versionNumber) {
+		this.sessionID = sessionID;
 		this.versionNumber = versionNumber;
 	}
 
