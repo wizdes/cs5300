@@ -93,6 +93,7 @@ public class ClientStubs implements RPCInterface{
 			catch(InterruptedIOException iioe){
 				//timeout
 				recvPkt = null;
+				return null;
 			}
 			catch(IOException ioe){
 				//other error

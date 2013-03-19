@@ -80,4 +80,9 @@ public class SessionUtilities {
 		String[] IPandPort =locationMetadata.split(":");
 		destinationAddressList.addDestAddress(InetAddress.getByName(IPandPort[0]), Integer.parseInt(IPandPort[1]));
 	}
+
+	public static UserContents parseReplicatedData(String responseString) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
