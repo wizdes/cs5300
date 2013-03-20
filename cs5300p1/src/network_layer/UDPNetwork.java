@@ -63,7 +63,7 @@ public class UDPNetwork implements NetworkInterface{
 
 	@Override
 	public void broadcast(byte[] buffer) {
-		// TODO Auto-generated method stub
+		// TODO do we even need this?
 		
 	}
 

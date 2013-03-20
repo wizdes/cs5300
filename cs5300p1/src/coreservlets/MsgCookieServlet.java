@@ -110,11 +110,14 @@ public class MsgCookieServlet extends HttpServlet {
 		String clientResponseString="";
 		int backupServerIndex=-1;
 		while(!clientResponseString.contains("Written")){
+			//TODO: handle the case where there is no place to write (no available backup)
+			
 			// expand this for 'k' elements
 			backupServerIndex = client.getRandomServerIndex();
 			
-			//TODO: This sessionWrite could be null
-			clientResponseString=new String(client.sessionWrite(sessionID, Integer.toString(versionNumber), "", "" + expirationInSeconds, backupServerIndex));
+			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), "", "" + expirationInSeconds, backupServerIndex);
+
+			if(resp != null) clientResponseString=new String(resp);
 		} 
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
 				sessionID, versionNumber, server.getLocationMetaData()+","+client.getDestAddr(backupServerIndex)+":"+client.getDestPort(backupServerIndex));
@@ -133,7 +136,6 @@ public class MsgCookieServlet extends HttpServlet {
 	}
 	
 	public void handleBackupServerData(byte[] resp, HttpServletRequest request, PrintWriter out, HttpServletResponse response){
-		//TODO: It might not be null
 		if(resp == null) {
 			// then 'create and replicate'
 			createAndReplicateNewCookie(request, out, response);
@@ -185,13 +187,13 @@ public class MsgCookieServlet extends HttpServlet {
 			SessionLock.lock();
 			UserContents session_info = myData.sessionState.get(sessionID);
 
-			// TODO: LOOK AT THIS PLACE
 			// we would have to check to make sure the session data is valid
 			// this is an issue if we have an old session data, but we think it's expired
 			// I think we should get rid of locks
-			// If we do not have session data, or it has expired, we create a new cookie
+			// If we do not have session data, or it has expired and it is the correct version, we create a new cookie
 			if (session_info == null
-					|| session_info.getExpirationTime() < System.currentTimeMillis() / 1000) {
+					|| (cookieContents.getVersionNumber() == session_info.getVersionNumber() 
+					&& session_info.getExpirationTime() < System.currentTimeMillis() / 1000)) {
 				createAndReplicateNewCookie(request, out, response);
 				return;
 			}

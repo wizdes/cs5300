@@ -158,7 +158,7 @@ public class ServerStubs extends Thread{
 	}
 
 	public String[] getMembers(int sz) {
-		// TODO Auto-generated method stub
+		// TODO BONUS; get this done then
 		return null;
 	}
 

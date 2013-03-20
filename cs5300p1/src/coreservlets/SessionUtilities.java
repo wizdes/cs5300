@@ -77,12 +77,14 @@ public class SessionUtilities {
 	}
 	
 	public static void parseLocationMetadata(String locationMetadata,DestinationAddressList destinationAddressList) throws NumberFormatException, UnknownHostException{
+		//TODO: I believe this is incorrect
 		String[] IPandPort =locationMetadata.split(":");
 		destinationAddressList.addDestAddress(InetAddress.getByName(IPandPort[0]), Integer.parseInt(IPandPort[1]));
 	}
 
 	public static UserContents parseReplicatedData(String responseString) {
-		// TODO Auto-generated method stub
-		return null;
+		String[] resp = responseString.split(":");
+		UserContents replicatedResp = new UserContents(resp[1], Integer.parseInt(resp[2]), resp[3], Integer.parseInt(resp[4]));
+		return replicatedResp;
 	}
 }
