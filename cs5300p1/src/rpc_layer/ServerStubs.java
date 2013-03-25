@@ -14,6 +14,7 @@ import network_layer.UDPNetwork;
 import coreservlets.UserContents;
 
 import data_layer.SessionData;
+import data_layer.sessionKey;
 import rpc_layer.Marshalling;
 
 public class ServerStubs extends Thread{
@@ -87,73 +88,43 @@ public class ServerStubs extends Thread{
 
 
 	public String[] sessionRead(String SID, String version) {
-		ReentrantLock SessionLock = myData.sessionLocks.get(SID);
-		if(SessionLock == null) return constructNotFoundResponse();
-
-		try {
-			SessionLock.lock();
-			UserContents session_info = myData.sessionState.get(SID);
-			if(session_info == null){
-				return constructNotFoundResponse();
-			}
-			else{
-				String[] foundResp = new String[2];
-				foundResp[0] = Integer.toString(session_info.getVersionNumber());
-				foundResp[1] = session_info.getMessage();
-				return foundResp;
-			}
-			
+		UserContents session_info = myData.sessionState.get(new sessionKey(SID, Integer.parseInt(version)));
+		if(session_info == null){
+			return constructNotFoundResponse();
 		}
-		finally{
-			SessionLock.unlock();
+		else{
+			String[] foundResp = new String[2];
+			foundResp[0] = Integer.toString(session_info.getVersionNumber());
+			foundResp[1] = session_info.getMessage();
+			return foundResp;
 		}
 	}
 
 	public String[] sessionWrite(String SID, String version, String data, String discardTime) {
-		ReentrantLock SessionLock = myData.sessionLocks.get(SID);
-		if(SessionLock == null){
-			//create a new one
+		UserContents session_info = myData.sessionState.get(new sessionKey(SID, Integer.parseInt(version)));
+		
+		if(session_info == null){
+			//create a new one				
 			myData.createNewSession(SID, Integer.parseInt(version), data, Long.parseLong(discardTime));
 		}
-		try {
-			SessionLock.lock();
-			UserContents session_info = myData.sessionState.get(SID);
-			
-			if(session_info == null){
-				//create a new one				
-				myData.createNewSession(SID, Integer.parseInt(version), data, Long.parseLong(discardTime));
-			}
-			
-			session_info.setMessage(data);
-			session_info.setExpirationTime(Long.parseLong(discardTime));
-			String[] writtenResp = new String[1];
-			writtenResp[0] = "Written";
-			return writtenResp;		
-		}
-		finally{
-			SessionLock.unlock();
-		}
+		
+		session_info.setMessage(data);
+		session_info.setExpirationTime(Long.parseLong(discardTime));
+		String[] writtenResp = new String[1];
+		writtenResp[0] = "Written";
+		return writtenResp;		
 	}
 
 	public String[] sessionDelete(String SID, String version) {
-		ReentrantLock SessionLock = myData.sessionLocks.get(SID);
-		if(SessionLock == null) return constructNotFoundResponse();
-		try {
-			SessionLock.lock();
-			UserContents session_info = myData.sessionState.get(SID);
-			if(session_info == null){
-				return constructNotFoundResponse();
-			}
-			else{
-				session_info.setExpirationTime(System.currentTimeMillis() / 1000);
-				String[] writtenResp = new String[1];
-				writtenResp[0] = "Deleted";
-				return writtenResp;
-			}
-			
+		UserContents session_info = myData.sessionState.get(new sessionKey(SID, Integer.parseInt(version)));
+		if(session_info == null){
+			return constructNotFoundResponse();
 		}
-		finally{
-			SessionLock.unlock();
+		else{
+			session_info.setExpirationTime(System.currentTimeMillis() / 1000);
+			String[] writtenResp = new String[1];
+			writtenResp[0] = "Deleted";
+			return writtenResp;
 		}
 	}
 

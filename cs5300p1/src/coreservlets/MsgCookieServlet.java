@@ -1,6 +1,8 @@
 package coreservlets;
 
 import data_layer.SessionData;
+import data_layer.sessionKey;
+
 import java.io.*;
 import java.util.Date;
 import java.util.Enumeration;
@@ -48,8 +50,7 @@ public class MsgCookieServlet extends HttpServlet {
 		myData = new SessionData();
 		client = new ClientStubs();
 		server = new ServerStubs(myData);
-		garbageCollectionThread = new GarbageCollectionThread(myData.sessionState,
-				myData.sessionLocks);
+		garbageCollectionThread = new GarbageCollectionThread(myData.sessionState);
 		garbageCollectionThread.start();
 	}
 
@@ -116,7 +117,6 @@ public class MsgCookieServlet extends HttpServlet {
 			backupServerIndex = client.getRandomServerIndex();
 			
 			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), "", "" + expirationInSeconds, backupServerIndex);
-
 			if(resp != null) clientResponseString=new String(resp);
 		} 
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
@@ -128,11 +128,6 @@ public class MsgCookieServlet extends HttpServlet {
 		myData.createNewSession(sessionID, versionNumber, message, expirationInSeconds);
 				
 		printWebsite(message, browserPrintWriter, sessionID, request, expirationInSeconds);
-	}
-	
-	private DestinationAddressList getMetadataLocations(String metaDatLocations){
-		
-		return new DestinationAddressList();
 	}
 	
 	public void handleBackupServerData(byte[] resp, HttpServletRequest request, PrintWriter out, HttpServletResponse response){
@@ -157,8 +152,7 @@ public class MsgCookieServlet extends HttpServlet {
 		PrintWriter out = response.getWriter();
 
 		// Parse the cookie into our custom CookieContents object
-		CookieContents cookieContents = SessionUtilities
-				.readCookie(SessionUtilities.GetRequestCookie(
+		CookieContents cookieContents = SessionUtilities.readCookie(SessionUtilities.GetRequestCookie(
 						StandardCookieName, request.getCookies()));
 		
 		// If the cookie didn't exist create it
@@ -167,69 +161,49 @@ public class MsgCookieServlet extends HttpServlet {
 			return;
 		}
 		
-		// If it did exist but we do not know about it, create a new cookie
-		// Note: this happens usually when the user has a cookie which has been
-		// garbage collected
-		String sessionID = cookieContents.getSessionID();
-		ReentrantLock SessionLock = myData.sessionLocks.get(sessionID);
-		if (SessionLock == null) {
-			// check if it exists in the latest location 
-			// if it's there, then do a sessionRead
+		//let's try to get the data
+		sessionKey cookieKey = new sessionKey(cookieContents.getSessionID(), cookieContents.getVersionNumber());
+		UserContents session_info = myData.sessionState.get(cookieKey);
+
+		// if it doesn't exist (garbage collected) or has expired, create a new cookie and exit
+		if (session_info == null
+				|| (cookieContents.getVersionNumber() == session_info.getVersionNumber() 
+				&& session_info.getExpirationTime() < System.currentTimeMillis() / 1000)) {
+			createAndReplicateNewCookie(request, out, response);
+			return;
+		}
+		
+		String sessionID = cookieKey.getSessionID();
+		
+		// we need to make sure we have the latest version; if not, ping the server that does
+		if(cookieContents.getVersionNumber() > session_info.getVersionNumber()){
 			DestinationAddressList dest = new DestinationAddressList();
 			SessionUtilities.parseLocationMetadata(cookieContents.getLocationMetadata(), dest);
 			byte[] resp = client.sessionRead(sessionID, Integer.toString(cookieContents.getVersionNumber()), dest);
-
 			handleBackupServerData(resp, request, out, response);
-			return;
 		}
-		try {
-			// If a lock exists, we grab it
-			SessionLock.lock();
-			UserContents session_info = myData.sessionState.get(sessionID);
 
-			// we would have to check to make sure the session data is valid
-			// this is an issue if we have an old session data, but we think it's expired
-			// I think we should get rid of locks
-			// If we do not have session data, or it has expired and it is the correct version, we create a new cookie
-			if (session_info == null
-					|| (cookieContents.getVersionNumber() == session_info.getVersionNumber() 
-					&& session_info.getExpirationTime() < System.currentTimeMillis() / 1000)) {
-				createAndReplicateNewCookie(request, out, response);
-				return;
-			}
-			
-			if(cookieContents.getVersionNumber() > session_info.getVersionNumber()){
-				DestinationAddressList dest = new DestinationAddressList();
-				SessionUtilities.parseLocationMetadata(cookieContents.getLocationMetadata(), dest);
-				byte[] resp = client.sessionRead(sessionID, Integer.toString(cookieContents.getVersionNumber()), dest);
-				handleBackupServerData(resp, request, out, response);
-			}
+		// at this point, we have the right data and everything
+		// We now process the request
+		boolean newCookie = processSession(request, response, cookieKey);
+		
+		// If we need a new cookie (from a logout click), we go here
+		if(newCookie){
+			// if it's a logout, then flush it from my own and all the primary/backup from the cookie
+			DestinationAddressList dest = new DestinationAddressList();
+			SessionUtilities.parseLocationMetadata(cookieContents.getLocationMetadata(), dest);
+			client.sessionDelete(sessionID, Integer.toString(cookieContents.getVersionNumber()), dest);
 
-			// otherwise keep going
-			// We now process the request
-			boolean newCookie = processSession(request, sessionID, response);
-			
-			// If we need a new cookie (from a logout click), we go here
-			if(newCookie){
-				// "HANDLE AND REPLICATE THE DATA PROPERLY"
-				// if it's a logout, then flush it from my own and all the primary/backup from the cookie
-				DestinationAddressList dest = new DestinationAddressList();
-				SessionUtilities.parseLocationMetadata(cookieContents.getLocationMetadata(), dest);
-				client.sessionDelete(sessionID, Integer.toString(cookieContents.getVersionNumber()), dest);
-
-				createAndReplicateNewCookie(request, out, response);
-				return;				
-			}
-			
-			System.out.println(sessionID + ":" + myData.sessionState.get(sessionID).getVersionNumber());
-
-			// Print the page out to the browser
-			printWebsite(myData.sessionState.get(sessionID).getMessage(), out, sessionID, request, 
-					myData.sessionState.get(sessionID).getExpirationTime());
-		} finally {
-			// Unlock the session
-			SessionLock.unlock();
+			createAndReplicateNewCookie(request, out, response);
+			return;				
 		}
+		
+		System.out.println(sessionID + ":" + myData.sessionState.get(cookieKey).getVersionNumber());
+
+		// Print the page out to the browser
+		printWebsite(myData.sessionState.get(cookieKey).getMessage(), out, sessionID, request, 
+				myData.sessionState.get(cookieKey).getExpirationTime());
+
 		return;
 	}
 
@@ -245,12 +219,11 @@ public class MsgCookieServlet extends HttpServlet {
 	/**
 	 * Parse the request information, and perform an action
 	 */
-	private boolean processSession(HttpServletRequest request, String sessionID,
-			HttpServletResponse response) {
+	private boolean processSession(HttpServletRequest request, HttpServletResponse response, sessionKey cookieKey) {
 		// processSession is always called inside a lock, so we don not need to
-		// lock
-		int versionNum = myData.sessionState.get(sessionID).getVersionNumber();
-		String message = myData.sessionState.get(sessionID).getMessage();
+		String sessionID = cookieKey.getSessionID();
+		int versionNum = myData.sessionState.get(cookieKey).getVersionNumber();
+		String message = myData.sessionState.get(cookieKey).getMessage();
 		Enumeration<String> paramNames = request.getParameterNames();
 		
 		//this case is when there is nothing in the parameters and it has a session state
@@ -267,24 +240,21 @@ public class MsgCookieServlet extends HttpServlet {
 
 			// Refresh
 			if (paramValues.length == 1 && paramName.equals("REF")) {
-				modState(sessionID, versionNum, "", response, request, message);
+				createAndReplicateCookie(request, response, message, sessionID, versionNum + 1);
 				return false;
 			}
 
-			// Set new text
+			// Replace
 			if (paramValues.length == 1 && paramName.equals("NewText")) {
 				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","");
 				System.out.println(paramValue);
-				modState(sessionID, versionNum, "", response, request, paramValue);
+				createAndReplicateCookie(request, response, message, sessionID, versionNum + 1);
 				return false;
 			}
 
 			// Logout
 			if (paramValues.length == 1 && paramName.equals("ESC")) {
-				// Again this function is always called in a lock, so we don't
-				// need a new one
-				myData.sessionState.get(sessionID).setExpirationTime(
-						System.currentTimeMillis() / 1000 - 1);
+				myData.sessionState.get(cookieKey).setExpirationTime(System.currentTimeMillis() / 1000 - 1);
 				return true;
 			}
 		}
