@@ -18,9 +18,9 @@ public class GarbageCollectionThread extends Thread {
 	/**
 	 * The constructs a GarbageCollectionThread object
 	 * 
-	 * @param sessionState2
+	 * @param sessionState
 	 *            The map of session IDs to their session states
-	 * @param sessionLocks2
+	 * @param sessionLocks
 	 *            The map of session IDs to their locks
 	 */
 	public GarbageCollectionThread(
@@ -38,9 +38,7 @@ public class GarbageCollectionThread extends Thread {
 			// Get the sessionState keys so we can walk the map
 			System.out.println("Collecting");
 			for (sessionKey sessionID : sessionState.keySet()) {
-				/** This is basically Test & Test & Set locking */
-				// Check if this value has expired, no need to get a lock if it
-				// has not
+				// Check if this value has expired
 				UserContents userContents = sessionState.get(sessionID);
 				if (userContents.getExpirationTime() < System.currentTimeMillis() / 1000) {
 					// remove the session
