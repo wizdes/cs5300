@@ -35,7 +35,12 @@ public class ServerStubs extends Thread{
 		return rpcSocket.getLocalPort();
 	}
 	public String getLocationMetaData(){
-		return rpcSocket.getLocalAddress()+":"+rpcSocket.getLocalPort();
+		System.out.println("Printing location metadata");
+		System.out.println(rpcSocket.getLocalAddress());
+		System.out.println(rpcSocket.getLocalAddress().getCanonicalHostName());
+		System.out.println(rpcSocket.getLocalAddress().getHostName());
+		System.out.println(rpcSocket.getLocalAddress().getHostAddress());
+		return rpcSocket.getLocalAddress().getHostName()+":"+rpcSocket.getLocalPort();
 	}
 	public void run(){
 		while(true){

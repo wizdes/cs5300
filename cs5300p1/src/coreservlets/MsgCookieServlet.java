@@ -46,10 +46,11 @@ public class MsgCookieServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		// this sets a unique clientID per host
-		client.initClient(server.getServerPort());
 		myData = new SessionData();
-		client = new ClientStubs();
 		server = new ServerStubs(myData);
+		client = new ClientStubs();
+		client.initClient(server.getServerPort());
+
 		garbageCollectionThread = new GarbageCollectionThread(myData.sessionState);
 		garbageCollectionThread.start();
 	}
@@ -110,7 +111,7 @@ public class MsgCookieServlet extends HttpServlet {
 		// Build the cookie and add it to the response header
 		String clientResponseString="";
 		int backupServerIndex=-1;
-		while(!clientResponseString.contains("Written")){
+		while(!clientResponseString.contains("Written") && client.getNumServers() > 0){
 			//TODO: handle the case where there is no place to write (no available backup)
 			
 			// expand this for 'k' elements
@@ -119,8 +120,14 @@ public class MsgCookieServlet extends HttpServlet {
 			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), "", "" + expirationInSeconds, backupServerIndex);
 			if(resp != null) clientResponseString=new String(resp);
 		} 
+		
+		String locationMetaDataStr = server.getLocationMetaData();
+		if(backupServerIndex != -1){
+			locationMetaDataStr += ","+client.getDestAddr(backupServerIndex)+":"+client.getDestPort(backupServerIndex);
+		}
+		
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
-				sessionID, versionNumber, server.getLocationMetaData()+","+client.getDestAddr(backupServerIndex)+":"+client.getDestPort(backupServerIndex));
+				sessionID, versionNumber, locationMetaDataStr);
 		response.addCookie(retCookie);
 
 		// We grab a lock in order to put the new session into our sessionState
@@ -169,6 +176,8 @@ public class MsgCookieServlet extends HttpServlet {
 		if (session_info == null
 				|| (cookieContents.getVersionNumber() == session_info.getVersionNumber() 
 				&& session_info.getExpirationTime() < System.currentTimeMillis() / 1000)) {
+			System.out.println(session_info.getExpirationTime());
+			System.out.println(System.currentTimeMillis()/1000);
 			createAndReplicateNewCookie(request, out, response);
 			return;
 		}
@@ -199,11 +208,6 @@ public class MsgCookieServlet extends HttpServlet {
 		}
 		
 		System.out.println(sessionID + ":" + myData.sessionState.get(cookieKey).getVersionNumber());
-
-		// Print the page out to the browser
-		printWebsite(myData.sessionState.get(cookieKey).getMessage(), out, sessionID, request, 
-				myData.sessionState.get(cookieKey).getExpirationTime());
-
 		return;
 	}
 
@@ -248,7 +252,7 @@ public class MsgCookieServlet extends HttpServlet {
 			if (paramValues.length == 1 && paramName.equals("NewText")) {
 				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","");
 				System.out.println(paramValue);
-				createAndReplicateCookie(request, response, message, sessionID, versionNum + 1);
+				createAndReplicateCookie(request, response, paramValue, sessionID, versionNum + 1);
 				return false;
 			}
 

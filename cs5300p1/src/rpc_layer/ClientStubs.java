@@ -126,6 +126,10 @@ public class ClientStubs implements RPCInterface{
 	public int getRandomServerIndex(){
 		return random.nextInt(clientAddresses.size());
 	}
+	public int getNumServers(){
+		return clientAddresses.size();
+	}
+	
 	public InetAddress getDestAddr(int index){
 		return clientAddresses.getDestAddr(index);
 	}

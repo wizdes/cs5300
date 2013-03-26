@@ -79,6 +79,7 @@ public class SessionUtilities {
 	public static void parseLocationMetadata(String locationMetadata,DestinationAddressList destinationAddressList) throws NumberFormatException, UnknownHostException{
 		//TODO: I believe this is incorrect
 		String[] IPandPort =locationMetadata.split(":");
+		System.out.println(locationMetadata);
 		destinationAddressList.addDestAddress(InetAddress.getByName(IPandPort[0]), Integer.parseInt(IPandPort[1]));
 	}
 
