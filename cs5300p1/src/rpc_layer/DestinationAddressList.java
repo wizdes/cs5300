@@ -50,4 +50,9 @@ public class DestinationAddressList {
 	public Integer getDestPort(int index){
 		return destPort.get(index);
 	}
+	
+	public void removeAddr(int index){
+		destAddr.remove(index);
+		destPort.remove(index);
+	}
 }

@@ -15,7 +15,7 @@ public class ClientStubs implements RPCInterface{
 	private int callIDCounter;
 	private DestinationAddressList clientAddresses;
 	private Random random = new Random();
-	public final static int UDPTimeOutms = 2000000;
+	public final static int UDPTimeOutms = 2000;
 	
 	public void initClient(int rpc_server_port){
 		callIDCounter = 10000 * rpc_server_port;
@@ -64,7 +64,6 @@ public class ClientStubs implements RPCInterface{
 		DatagramSocket rpcSocket = null;
 		try {
 			rpcSocket = new DatagramSocket();
-			System.out.println(rpcSocket.getInetAddress());
 			int callID = getUniqueCallID();
 			byte[] outBuf = Marshalling.marshall(createArrayObjects(callID, op, SID, version, data, discardTime, sz));
 			
@@ -140,6 +139,10 @@ public class ClientStubs implements RPCInterface{
 	}
 	public int getDestPort(int index){
 		return clientAddresses.getDestPort(index);
+	}
+	
+	public void removeAddr(int index){
+		clientAddresses.removeAddr(index);
 	}
 	@Override
 	public byte[] sessionDelete(String SID, String version, DestinationAddressList dest) {
