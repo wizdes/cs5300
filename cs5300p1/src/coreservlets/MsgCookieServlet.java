@@ -130,7 +130,12 @@ public class MsgCookieServlet extends HttpServlet {
 			backupServerIndex = client.getRandomServerIndex();
 			
 			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), message, "" + expirationInSeconds, backupServerIndex);
+			System.out.print("Got resp "+resp);
 			if(resp != null) clientResponseString=new String(resp);
+			else {
+				client.removeAddr(backupServerIndex);
+				backupServerIndex=-1;
+			}
 		} 
 		
 		String locationMetaDataStr = server.getLocationMetaData();
