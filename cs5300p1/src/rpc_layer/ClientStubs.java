@@ -15,7 +15,7 @@ public class ClientStubs implements RPCInterface{
 	private int callIDCounter;
 	private DestinationAddressList clientAddresses;
 	private Random random = new Random();
-	public final static int UDPTimeOutms = 2000000;
+	public final static int UDPTimeOutms = 2000;
 	
 	public void initClient(int rpc_server_port){
 		callIDCounter = 10000 * rpc_server_port;
