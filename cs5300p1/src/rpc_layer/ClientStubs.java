@@ -13,11 +13,13 @@ import network_layer.UDPNetwork;
 public class ClientStubs implements RPCInterface{
 	
 	private int callIDCounter;
+	private int rpc_server_port;
 	private DestinationAddressList clientAddresses;
 	private Random random = new Random();
 	public final static int UDPTimeOutms = 2000;
 	
 	public void initClient(int rpc_server_port){
+		this.rpc_server_port=rpc_server_port;
 		callIDCounter = 10000 * rpc_server_port;
 		clientAddresses = new DestinationAddressList();
 	}
@@ -72,8 +74,13 @@ public class ClientStubs implements RPCInterface{
 				//(so I don't have to put the timeout and do additional logic later)
 				InetAddress addr = dest.getDestAddr(i);
 				int portNum = dest.getDestPort(i);
+				System.out.println(	addr.getHostAddress()+"=="+InetAddress.getLocalHost().getHostAddress()+" "+portNum+"=="+rpc_server_port);
+
+				if (addr.getHostAddress().equals(InetAddress.getLocalHost().getHostAddress()) && portNum==rpc_server_port){
+					continue;
+					
+				}
 				System.out.println("Sending to "+addr+":"+portNum);
-				//if (addr.equals(obj) && portNum.equals())
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, portNum);	
 				rpcSocket.send(sendPkt);
 			}
