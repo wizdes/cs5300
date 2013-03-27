@@ -10,15 +10,12 @@ import java.util.Random;
 
 import network_layer.UDPNetwork;
 
-import rpc_layer.Marshalling;
-import rpc_layer.DestinationAddressList;
-import rpc_layer.OperationEnums;
-
 public class ClientStubs implements RPCInterface{
 	
 	private int callIDCounter;
 	private DestinationAddressList clientAddresses;
 	private Random random = new Random();
+	public final static int UDPTimeOutms = 2000;
 	
 	public void initClient(int rpc_server_port){
 		callIDCounter = 10000 * rpc_server_port;
@@ -67,7 +64,7 @@ public class ClientStubs implements RPCInterface{
 		DatagramSocket rpcSocket = null;
 		try {
 			rpcSocket = new DatagramSocket();
-
+			System.out.println(rpcSocket.getInetAddress());
 			int callID = getUniqueCallID();
 			byte[] outBuf = Marshalling.marshall(createArrayObjects(callID, op, SID, version, data, discardTime, sz));
 			
@@ -76,6 +73,8 @@ public class ClientStubs implements RPCInterface{
 				//(so I don't have to put the timeout and do additional logic later)
 				InetAddress addr = dest.getDestAddr(i);
 				int portNum = dest.getDestPort(i);
+				System.out.println("Sending to "+addr+":"+portNum);
+				//if (addr.equals(obj) && portNum.equals())
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, portNum);	
 				rpcSocket.send(sendPkt);
 			}
@@ -85,6 +84,7 @@ public class ClientStubs implements RPCInterface{
 				Integer checkCallID = 0;
 				do{
 					recvPkt.setLength(inBuf.length);
+					rpcSocket.setSoTimeout(UDPTimeOutms);
 					rpcSocket.receive(recvPkt);
 					checkCallID = Integer.parseInt((String) (Marshalling.unmarshall(inBuf)[0]));
 				}
@@ -97,6 +97,7 @@ public class ClientStubs implements RPCInterface{
 			}
 			catch(IOException ioe){
 				//other error
+				System.out.println("io exception");
 			}
 		} catch (SocketException e) {
 			e.printStackTrace();
@@ -105,6 +106,9 @@ public class ClientStubs implements RPCInterface{
 		}
 		finally{
 			rpcSocket.close();
+		}
+		if (recvPkt==null){
+			return null;
 		}
 		return recvPkt.getData();
 	}
