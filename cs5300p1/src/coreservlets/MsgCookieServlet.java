@@ -78,6 +78,7 @@ public class MsgCookieServlet extends HttpServlet {
 				+ "<input type=submit name=REF value=Refresh>" + "</form>"
 				+ "<form method=GET action=\"msgcookieservlet\">"
 				+ "<input type=submit name=ESC value=LogOut>" + "</form>"
+				+ "<input type=submit name=crash value=Crash>" + "</form>"
 				+ "</body>" + "</html>");
 		browserPrintWriter.print("Session on: " + request.getRemoteAddr() + ":"
 				+ request.getRemotePort() + "<br/>");
