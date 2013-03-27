@@ -25,6 +25,21 @@ public class DestinationAddressList {
 		}
 	}
 	
+	public boolean contains(InetAddress da){
+		if(destAddr.contains(da)) return true;
+		return false;
+		
+	}
+	
+	public void mergeList(DestinationAddressList newList){
+		for(int i = 0; i < newList.destAddr.size();i++){
+			if(!contains(newList.destAddr.get(i))){
+				destAddr.add(newList.destAddr.get(i));
+				destPort.add(newList.destPort.get(i));
+			}
+		}
+	}
+	
 	public int size(){
 		return destAddr.size();
 	}

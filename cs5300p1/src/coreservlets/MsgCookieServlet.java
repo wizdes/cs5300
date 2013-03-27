@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import rpc_layer.ClientStubs;
 import rpc_layer.DestinationAddressList;
+import rpc_layer.Marshalling;
 import rpc_layer.ServerStubs;
 
 @WebServlet("/msgcookieservlet")
@@ -29,7 +30,7 @@ public class MsgCookieServlet extends HttpServlet {
 	// Used creating cookies to protect session IDs
 	private int counter = 0;
 	private final String StandardCookieName = "CS5300PROJ1SESSION";
-	public final int timeOutSeconds = 60;
+	public final int timeOutSeconds = 6000;
 	private GarbageCollectionThread garbageCollectionThread;
 	private final String DefaultMessage = "Default Message.";
 	private String serverID;
@@ -54,6 +55,7 @@ public class MsgCookieServlet extends HttpServlet {
 		client = new ClientStubs();
 		setServerID();
 		client.initClient(server.getServerPort());
+		server.start();
 		
 		garbageCollectionThread = new GarbageCollectionThread(myData.sessionState);
 		garbageCollectionThread.start();
@@ -126,13 +128,14 @@ public class MsgCookieServlet extends HttpServlet {
 			// expand this for 'k' elements
 			backupServerIndex = client.getRandomServerIndex();
 			
-			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), "", "" + expirationInSeconds, backupServerIndex);
+			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), message, "" + expirationInSeconds, backupServerIndex);
 			if(resp != null) clientResponseString=new String(resp);
 		} 
 		
 		String locationMetaDataStr = server.getLocationMetaData();
+		System.out.println("LOCATION METADATA IS: " + locationMetaDataStr);
 		if(backupServerIndex != -1){
-			locationMetaDataStr += ","+client.getDestAddr(backupServerIndex)+":"+client.getDestPort(backupServerIndex);
+			locationMetaDataStr += ","+client.getDestAddr(backupServerIndex).getHostName()+":"+client.getDestPort(backupServerIndex);
 		}
 		
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
@@ -142,22 +145,25 @@ public class MsgCookieServlet extends HttpServlet {
 		// We grab a lock in order to put the new session into our sessionState
 		// map
 		myData.createNewSession(sessionID, versionNumber, message, expirationInSeconds);
-				
 		printWebsite(message, browserPrintWriter, sessionID, request, expirationInSeconds,foundOnserverID);
 	}
 	
-	public void handleBackupServerData(byte[] resp, HttpServletRequest request, PrintWriter out, HttpServletResponse response){
+	public String handleBackupServerData(byte[] resp, HttpServletRequest request, PrintWriter out, HttpServletResponse response, String sessionID){
 		if(resp == null) {
 			// then 'create and replicate'
 			createAndReplicateNewCookie(request, out, response);
-			return;				
+			return null;				
 		}
 		else {
 			// then 'create and replicate'
-			String responseString = new String(resp);
-			UserContents replicatedResponse = SessionUtilities.parseReplicatedData(responseString);
-			createAndReplicateCookie(request, response, replicatedResponse.getMessage(), replicatedResponse.getSessionID(), replicatedResponse.getVersionNumber(),SessionUtilities.getServerID(responseString));
-			return;						
+			String[] responseString = (String[]) Marshalling.unmarshall(resp);
+			if(responseString.length >= 3 && responseString[2] == "Not found"){
+				createAndReplicateNewCookie(request, out, response);
+				return null;
+			}
+			UserContents replicatedResponse = SessionUtilities.parseReplicatedData(responseString, sessionID);
+			myData.createNewSession(sessionID, replicatedResponse.getVersionNumber(), replicatedResponse.getMessage(), replicatedResponse.getVersionNumber());
+			return responseString[2];						
 		}
 	}
 	
@@ -195,6 +201,8 @@ public class MsgCookieServlet extends HttpServlet {
 		
 		String sessionID = cookieKey.getSessionID();
 		
+		String source = "cache";
+		
 		// we need to make sure we have the latest version; if not, ping the server that does
 		if(session_info == null || cookieContents.getVersionNumber() > session_info.getVersionNumber()){
 			if(cookieContents.getDestinationAddressList().size()>0){
@@ -204,7 +212,8 @@ public class MsgCookieServlet extends HttpServlet {
 					createAndReplicateNewCookie(request, out, response);
 					return;
 				}
-				handleBackupServerData(resp, request, out, response);
+				source = handleBackupServerData(resp, request, out, response, sessionID);
+				if(source == null) return;
 			}
 			else {
 				createAndReplicateNewCookie(request, out, response);
@@ -214,7 +223,7 @@ public class MsgCookieServlet extends HttpServlet {
 
 		// at this point, we have the right data and everything
 		// We now process the request
-		boolean newCookie = processSession(request, response, cookieKey);
+		boolean newCookie = processSession(request, response, cookieKey, source);
 		
 		// If we need a new cookie (from a logout click), we go here
 		if(newCookie){
@@ -235,15 +244,15 @@ public class MsgCookieServlet extends HttpServlet {
 	 * Modifies the session state to new information
 	 */
 	private void modState(String sessionID, int versionNumber, String locationMetadata, HttpServletResponse response,
-			HttpServletRequest request, String message) {
+			HttpServletRequest request, String message, String source) {
 		// Set the new cookie and session information
-		createAndReplicateCookie(request, response, message, sessionID, versionNumber + 1,"cache");
+		createAndReplicateCookie(request, response, message, sessionID, versionNumber + 1,source);
 	}
 
 	/**
 	 * Parse the request information, and perform an action
 	 */
-	private boolean processSession(HttpServletRequest request, HttpServletResponse response, sessionKey cookieKey) {
+	private boolean processSession(HttpServletRequest request, HttpServletResponse response, sessionKey cookieKey,String source) {
 		// processSession is always called inside a lock, so we don not need to
 		String sessionID = cookieKey.getSessionID();
 		int versionNum = myData.sessionState.get(cookieKey).getVersionNumber();
@@ -253,7 +262,7 @@ public class MsgCookieServlet extends HttpServlet {
 		//this case is when there is nothing in the parameters and it has a session state
 		// this is the same behavior as a refresh button click
 		if(paramNames.hasMoreElements() == false){
-			modState(sessionID, versionNum, "", response, request, message);
+			createAndReplicateCookie(request, response, message, sessionID, versionNum + 1,source);
 			return false;			
 		}
 		
@@ -264,7 +273,7 @@ public class MsgCookieServlet extends HttpServlet {
 
 			// Refresh
 			if (paramValues.length == 1 && paramName.equals("REF")) {
-				createAndReplicateCookie(request, response, message, sessionID, versionNum + 1,"cache");
+				createAndReplicateCookie(request, response, message, sessionID, versionNum + 1,source);
 				return false;
 			}
 
@@ -272,7 +281,7 @@ public class MsgCookieServlet extends HttpServlet {
 			if (paramValues.length == 1 && paramName.equals("NewText")) {
 				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","");
 				System.out.println(paramValue);
-				createAndReplicateCookie(request, response, paramValue, sessionID, versionNum + 1,"cache");
+				createAndReplicateCookie(request, response, paramValue, sessionID, versionNum + 1,source);
 				return false;
 			}
 

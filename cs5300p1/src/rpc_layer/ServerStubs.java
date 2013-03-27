@@ -73,10 +73,14 @@ public class ServerStubs extends Thread{
 					default:
 						break;						
 				}
-				String[] tempList = new String[outBufStr.length + 1];
+				String[] tempList = new String[outBufStr.length + 2];
 				tempList[0] = (String) elements[0];
+				tempList[1] = InetAddress.getLocalHost().getHostName()+":"+rpcSocket.getLocalPort();
 				//tempList[1] = 
-				System.arraycopy(outBufStr, 0, tempList, 1, outBufStr.length);
+				System.arraycopy(outBufStr, 0, tempList, 2, outBufStr.length);
+				
+				System.out.println("Server sending to Client Stub.");
+				System.out.println(Arrays.toString(tempList));
 				
 				byte[] outBuf = Marshalling.marshall(tempList);
 				
@@ -116,9 +120,10 @@ public class ServerStubs extends Thread{
 			//create a new one				
 			myData.createNewSession(SID, Integer.parseInt(version), data, Long.parseLong(discardTime));
 		}
-		
-		session_info.setMessage(data);
-		session_info.setExpirationTime(Long.parseLong(discardTime));
+		else{
+			session_info.setMessage(data);
+			session_info.setExpirationTime(Long.parseLong(discardTime));
+		}
 		String[] writtenResp = new String[1];
 		writtenResp[0] = "Written";
 		return writtenResp;		

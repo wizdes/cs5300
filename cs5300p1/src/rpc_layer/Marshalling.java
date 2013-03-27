@@ -13,7 +13,7 @@ public class Marshalling {
 	static public byte[] marshall(Object[] objects){
 		String output = "";
 		for(Object object:objects){
-			output += object.toString() + ":";
+			output += object.toString() + ";";
 		}
 		try {
 			return output.getBytes("UTF-8");
@@ -39,7 +39,7 @@ public class Marshalling {
 		}
 		
 		string = string.replace("\0", "");
-		String[] retArray = string.split(":");
+		String[] retArray = string.split(";");
 		return retArray;
 	}
 }

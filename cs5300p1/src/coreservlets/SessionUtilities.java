@@ -88,9 +88,9 @@ public class SessionUtilities {
 		destinationAddressList.addDestAddress(InetAddress.getByName(IPandPort[0]), Integer.parseInt(IPandPort[1]));
 	}
 
-	public static UserContents parseReplicatedData(String responseString) {
-		String[] resp = responseString.split(":");
-		UserContents replicatedResp = new UserContents(resp[1], Integer.parseInt(resp[2]), resp[3], Integer.parseInt(resp[4]));
+	public static UserContents parseReplicatedData(String[] responseString, String sessionID) {
+		String[] resp = responseString;
+		UserContents replicatedResp = new UserContents(sessionID, Integer.parseInt(resp[2]), resp[3], System.currentTimeMillis() / 1000);
 		return replicatedResp;
 	}
 	public static String getServerID(String responseString) {

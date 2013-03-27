@@ -5,16 +5,6 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee 
 	http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
   
-  <!-- Use the URL http://hostName/appName/MsgCookieServlet for MsgCookieServlet -->
-  <servlet>
-    <servlet-name>msgcookieservlet</servlet-name>
-    <servlet-class>coreservlets.MsgCookieServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>msgcookieservlet</servlet-name>
-    <url-pattern>/msgcookieservlet</url-pattern>
-  </servlet-mapping>
-  
   <!-- If the URL gives a directory but not a filename, try
        index.jsp first and index.html second. If neither is
        found, the result is server-specific (e.g., a  
