@@ -78,6 +78,7 @@ public class MsgCookieServlet extends HttpServlet {
 				+ "<input type=submit name=REF value=Refresh>" + "</form>"
 				+ "<form method=GET action=\"msgcookieservlet\">"
 				+ "<input type=submit name=ESC value=LogOut>" + "</form>"
+				+ "<form method=GET action=\"msgcookieservlet\">"
 				+ "<input type=submit name=crash value=Crash>" + "</form>"
 				+ "</body>" + "</html>");
 		browserPrintWriter.print("Session on: " + request.getRemoteAddr() + ":"
@@ -295,13 +296,18 @@ public class MsgCookieServlet extends HttpServlet {
 				myData.sessionState.get(cookieKey).setExpirationTime(System.currentTimeMillis() / 1000 - 1);
 				return true;
 			}
+			
+			// crash
+			if (paramValues.length == 1 && paramName.equals("crash")) {
+					System.exit(0);
+			}
 		}
 		return false;
 	}
 	
 	private void setServerID(){
 		try {
-			serverID=InetAddress.getLocalHost().getHostName()+":"+server.getServerPort();
+			serverID=InetAddress.getLocalHost().getHostAddress()+":"+server.getServerPort();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}

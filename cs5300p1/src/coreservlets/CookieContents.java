@@ -30,7 +30,7 @@ public class CookieContents extends DataContents {
 	public String getLocationMetadata() {
 		String output="";
 		for (int i=0; i<destinationAddressList.size(); i++){
-			output+=destinationAddressList.getDestAddr(i)+":"+destinationAddressList.getDestPort(i);
+			output+=destinationAddressList.getDestAddr(i).getHostAddress()+":"+destinationAddressList.getDestPort(i);
 			if(i<destinationAddressList.size()-1){
 				output+=",";
 			}

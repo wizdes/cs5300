@@ -39,7 +39,7 @@ public class ServerStubs extends Thread{
 	}
 	public String getLocationMetaData(){
 		try {
-			return InetAddress.getLocalHost().getHostName()+":"+rpcSocket.getLocalPort();
+			return InetAddress.getLocalHost().getHostAddress()+":"+rpcSocket.getLocalPort();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}

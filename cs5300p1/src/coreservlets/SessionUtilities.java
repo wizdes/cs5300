@@ -81,7 +81,7 @@ public class SessionUtilities {
 		String[] IPandPort =locationMetadata.split(":");
 		System.out.println(locationMetadata);
 		InetAddress ip=InetAddress.getByName(IPandPort[0]);
-		System.out.println(IPandPort[0]+ " is "+ip);
+		System.out.println(IPandPort[0]+ " is "+ip.getHostAddress());
 		if(ip.equals(InetAddress.getByName("0.0.0.0"))){
 			ip=InetAddress.getByName("127.0.0.1");
 		}
