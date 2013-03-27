@@ -80,6 +80,11 @@ public class SessionUtilities {
 		//TODO: I believe this is incorrect
 		String[] IPandPort =locationMetadata.split(":");
 		System.out.println(locationMetadata);
+		InetAddress ip=InetAddress.getByName(IPandPort[0]);
+		System.out.println(IPandPort[0]+ " is "+ip);
+		if(ip.equals(InetAddress.getByName("0.0.0.0"))){
+			ip=InetAddress.getByName("127.0.0.1");
+		}
 		destinationAddressList.addDestAddress(InetAddress.getByName(IPandPort[0]), Integer.parseInt(IPandPort[1]));
 	}
 
@@ -87,5 +92,8 @@ public class SessionUtilities {
 		String[] resp = responseString.split(":");
 		UserContents replicatedResp = new UserContents(resp[1], Integer.parseInt(resp[2]), resp[3], Integer.parseInt(resp[4]));
 		return replicatedResp;
+	}
+	public static String getServerID(String responseString) {
+		return responseString.split(":")[0];
 	}
 }
