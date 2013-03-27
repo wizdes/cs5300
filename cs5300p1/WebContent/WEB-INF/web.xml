@@ -11,15 +11,6 @@
        directory listing or a 404 error).  
   -->
     <!-- Use the URL http://hostName/appName/MsgCookieServlet for MsgCookieServlet -->
-  <servlet>
-    <servlet-name>msgcookieservlet</servlet-name>
-    <servlet-class>coreservlets.MsgCookieServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>msgcookieservlet</servlet-name>
-    <url-pattern>/msgcookieservlet</url-pattern>
-  </servlet-mapping>
-
   <welcome-file-list>
     <welcome-file>index.html</welcome-file>
   </welcome-file-list>
