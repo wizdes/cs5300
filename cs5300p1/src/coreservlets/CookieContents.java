@@ -31,6 +31,9 @@ public class CookieContents extends DataContents {
 		String output="";
 		for (int i=0; i<destinationAddressList.size(); i++){
 			output+=destinationAddressList.getDestAddr(i)+":"+destinationAddressList.getDestPort(i);
+			if(i<destinationAddressList.size()-1){
+				output+=",";
+			}
 		}
 		return output;
 	}
@@ -42,5 +45,12 @@ public class CookieContents extends DataContents {
 	public void setDestinationAddressList(DestinationAddressList destinationAddressList) {
 		this.destinationAddressList = destinationAddressList;
 	}
+	
 
+	/**
+	 * @return destinationAddressList
+	 */
+	public DestinationAddressList getDestinationAddressList() {
+		return destinationAddressList;
+	}
 }
