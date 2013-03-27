@@ -164,4 +164,7 @@ public class ClientStubs implements RPCInterface{
 		clientAddresses.mergeList(dest);
 	}
 
+	public DestinationAddressList getClientAddresses(){
+		return clientAddresses;
+	}
 }

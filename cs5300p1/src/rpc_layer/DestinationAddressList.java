@@ -55,4 +55,12 @@ public class DestinationAddressList {
 		destAddr.remove(index);
 		destPort.remove(index);
 	}
+	
+	public String toString(){
+		String output="";
+		for (int i=0; i<destAddr.size(); i++){
+			output+=destAddr.get(i)+":"+destPort.get(i);
+		}
+		return output;
+	}
 }
