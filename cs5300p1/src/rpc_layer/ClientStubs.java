@@ -114,7 +114,6 @@ public class ClientStubs implements RPCInterface{
 
 	@Override
 	public byte[] sessionRead(String SID, String version, DestinationAddressList dest) { 
-		clientAddresses.mergeList(dest);
 		return sessionAction(SID, version, null, null, -1, OperationEnums.operationSESSIONREAD, dest);
 	}
 
@@ -152,6 +151,10 @@ public class ClientStubs implements RPCInterface{
 	@Override
 	public byte[] getMembers(int sz, DestinationAddressList dest) {
 		return sessionAction(null, null, null, null, sz, OperationEnums.operationGETMEMBERS, dest);
+	}
+
+	public void mergeList(DestinationAddressList dest){
+		clientAddresses.mergeList(dest);
 	}
 
 }

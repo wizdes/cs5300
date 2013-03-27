@@ -185,13 +185,12 @@ public class MsgCookieServlet extends HttpServlet {
 		// Parse the cookie into our custom CookieContents object
 		CookieContents cookieContents = SessionUtilities.readCookie(SessionUtilities.GetRequestCookie(
 						StandardCookieName, request.getCookies()));
-		
 		// If the cookie didn't exist create it
 		if (cookieContents == null) {
 			createAndReplicateNewCookie(request, out, response);
 			return;
 		}
-		
+		client.mergeList(cookieContents.getDestinationAddressList());
 		//let's try to get the data
 		sessionKey cookieKey = new sessionKey(cookieContents.getSessionID(), cookieContents.getVersionNumber());
 		UserContents session_info = myData.sessionState.get(cookieKey);
