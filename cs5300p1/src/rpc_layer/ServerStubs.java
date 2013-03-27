@@ -5,8 +5,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.concurrent.locks.ReentrantLock;
 
 import network_layer.UDPNetwork;
@@ -35,12 +38,12 @@ public class ServerStubs extends Thread{
 		return rpcSocket.getLocalPort();
 	}
 	public String getLocationMetaData(){
-		System.out.println("Printing location metadata");
-		System.out.println(rpcSocket.getLocalAddress());
-		System.out.println(rpcSocket.getLocalAddress().getCanonicalHostName());
-		System.out.println(rpcSocket.getLocalAddress().getHostName());
-		System.out.println(rpcSocket.getLocalAddress().getHostAddress());
-		return rpcSocket.getLocalAddress().getHostName()+":"+rpcSocket.getLocalPort();
+		try {
+			return InetAddress.getLocalHost().getHostName()+":"+rpcSocket.getLocalPort();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	public void run(){
 		while(true){
@@ -72,6 +75,7 @@ public class ServerStubs extends Thread{
 				}
 				String[] tempList = new String[outBufStr.length + 1];
 				tempList[0] = (String) elements[0];
+				//tempList[1] = 
 				System.arraycopy(outBufStr, 0, tempList, 1, outBufStr.length);
 				
 				byte[] outBuf = Marshalling.marshall(tempList);
