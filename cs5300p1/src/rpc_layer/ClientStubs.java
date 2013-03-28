@@ -99,7 +99,6 @@ public class ClientStubs implements RPCInterface{
 			catch(InterruptedIOException iioe){
 				//timeout
 				recvPkt = null;
-				return null;
 			}
 			catch(IOException ioe){
 				//other error
@@ -114,6 +113,9 @@ public class ClientStubs implements RPCInterface{
 			rpcSocket.close();
 		}
 		if (recvPkt==null){
+			for(int i = 0; i < dest.size(); i++){
+				removeAddr(i);
+			}
 			return null;
 		}
 		return recvPkt.getData();

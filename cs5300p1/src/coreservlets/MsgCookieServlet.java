@@ -72,7 +72,7 @@ public class MsgCookieServlet extends HttpServlet {
 				+ "</b></big></big>\n");
 		browserPrintWriter.print("<html>\n" + "<body>\n"
 				+ "<form method=GET action=\"msgcookieservlet\">"
-				+ "<input type=text name=NewText size=30 maxlength=400>"
+				+ "<input type=text name=NewText size=30 maxlength=300>"
 				+ "&nbsp;&nbsp;" + "<input type=submit name=cmd value=Replace>"
 				+ "&nbsp;&nbsp;" + "</form>"
 				+ "<form method=GET action=\"msgcookieservlet\">"
@@ -138,7 +138,6 @@ public class MsgCookieServlet extends HttpServlet {
 			System.out.print("Got resp "+resp);
 			if(resp != null) clientResponseString=new String(resp);
 			else {
-				client.removeAddr(backupServerIndex);
 				backupServerIndex=-1;
 			}
 		} 
@@ -282,7 +281,7 @@ public class MsgCookieServlet extends HttpServlet {
 
 			// Replace
 			if (paramValues.length == 1 && paramName.equals("NewText")) {
-				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","");
+				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","").substring(300);
 				System.out.println(paramValue);
 				createAndReplicateCookie(request, response, paramValue, sessionID, versionNum + 1,source,locationMetadata);
 				return false;
