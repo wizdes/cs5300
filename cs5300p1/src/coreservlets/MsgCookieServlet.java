@@ -290,7 +290,7 @@ public class MsgCookieServlet extends HttpServlet {
 
 			// Logout
 			if (paramValues.length == 1 && paramName.equals("ESC")) {
-				myData.sessionState.get(cookieKey).setExpirationTime(System.currentTimeMillis() / 1000 - 1);
+				myData.sessionState.remove(cookieKey);
 				return true;
 			}
 			
