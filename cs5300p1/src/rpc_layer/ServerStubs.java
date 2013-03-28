@@ -135,7 +135,7 @@ public class ServerStubs extends Thread{
 			return constructNotFoundResponse();
 		}
 		else{
-			session_info.setExpirationTime(System.currentTimeMillis() / 1000);
+			session_info.setExpirationTime(System.currentTimeMillis() / 1000 -1);
 			String[] writtenResp = new String[1];
 			writtenResp[0] = "Deleted";
 			return writtenResp;
