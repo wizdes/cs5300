@@ -42,7 +42,7 @@ public class MsgCookieServlet extends HttpServlet {
 	private ClientStubs client = null;
 	private ServerStubs server = null;
 	
-	private int k = 1;
+	private int k = 2;
 
 	/**
 	 * This init is called the first time the servlet is launched
@@ -129,7 +129,7 @@ public class MsgCookieServlet extends HttpServlet {
 		String clientResponseString="";
 		int backupServerIndex=-1;
 		int sentTo=0;
-		while(!clientResponseString.contains("Written") && client.getNumServers() > 0 && sentTo<k){
+		while(client.getNumServers() > 0 && sentTo<k){
 			//TODO: handle the case where there is no place to write (no available backup)
 			
 			// expand this for 'k' elements
@@ -139,7 +139,9 @@ public class MsgCookieServlet extends HttpServlet {
 			System.out.print("Got resp "+resp);
 			if(resp != null) {
 				clientResponseString=new String(resp);
-				sentTo++;
+				if(clientResponseString.contains("Written")){
+					sentTo++;
+				}
 			}
 			else {
 				backupServerIndex=-1;
@@ -149,7 +151,7 @@ public class MsgCookieServlet extends HttpServlet {
 		String locationMetaDataStr = server.getLocationMetaData();
 		System.out.println("LOCATION METADATA IS: " + locationMetaDataStr);
 		if(backupServerIndex != -1){
-			locationMetaDataStr += ","+client.getDestAddr(backupServerIndex).getHostName()+":"+client.getDestPort(backupServerIndex);
+			locationMetaDataStr += ","+client.getDestAddr(backupServerIndex).getHostAddress()+":"+client.getDestPort(backupServerIndex);
 		}
 		
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
@@ -171,7 +173,7 @@ public class MsgCookieServlet extends HttpServlet {
 		else {
 			// then 'create and replicate'
 			String[] responseString = (String[]) Marshalling.unmarshall(resp);
-			if(responseString.length >= 3 && responseString[2] == "Not found"){
+			if((responseString.length >= 3 && responseString[2] == "Not found") || responseString.length < 3){
 				createAndReplicateNewCookie(request, out, response);
 				return null;
 			}

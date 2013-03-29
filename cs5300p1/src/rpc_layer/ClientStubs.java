@@ -74,6 +74,7 @@ public class ClientStubs implements RPCInterface{
 		byte[] outBuf = Marshalling.marshall(createArrayObjects(callID, op, SID, version, data, discardTime, sz));
 		InetAddress addr=null;
 		int portNum=-1;
+		System.out.println("entering for");
 		for(int i = 0; i < dest.size(); i++){
 			try {
 				//I PICKED SENDING TWO SESSIONREADS by doing this
@@ -124,11 +125,13 @@ public class ClientStubs implements RPCInterface{
 
 	@Override
 	public byte[] sessionRead(String SID, String version, DestinationAddressList dest) { 
+		System.out.println("Doing read");
 		return sessionAction(SID, version, null, null, -1, OperationEnums.operationSESSIONREAD, dest);
 	}
 
 	@Override
 	public byte[] sessionWrite(String SID, String version, String data, String discardTime, int serverIndex) {
+		System.out.println("Doing write");
 		if(clientAddresses.size() == 0) return null;
 		DestinationAddressList dest = new DestinationAddressList();
 		dest.addDestAddress(clientAddresses.getDestAddr(serverIndex), clientAddresses.getDestPort(serverIndex));
@@ -155,6 +158,7 @@ public class ClientStubs implements RPCInterface{
 	}
 	@Override
 	public byte[] sessionDelete(String SID, String version, DestinationAddressList dest) {
+		System.out.println("Doing delete");
 		return sessionAction(SID, version, null, null, -1, OperationEnums.operationDELETE, dest);
 	}
 

@@ -26,8 +26,8 @@ public class DestinationAddressList {
 		}
 	}
 	
-	public boolean contains(InetAddress da){
-		if(destAddr.contains(da)) return true;
+	public boolean contains(InetAddress da, int port){
+		if(destAddr.contains(da) && destPort.contains(port)) return true;
 		return false;
 		
 	}
@@ -37,11 +37,15 @@ public class DestinationAddressList {
 
 		for(int i = 0; i < newList.destAddr.size();i++){
 			try {
-				if(!contains(newList.destAddr.get(i)) && 
+				if(!contains(newList.destAddr.get(i),newList.destPort.get(i)) && 
 					!newList.destAddr.get(i).equals(InetAddress.getLocalHost().getHostAddress()) 
 					&& newList.destPort.get(i)!=rpc_server_port){
 					destAddr.add(newList.destAddr.get(i));
 					destPort.add(newList.destPort.get(i));
+					System.out.println("adding "+newList.destAddr.get(i).getHostAddress()+":"+newList.destPort.get(i)+" to mbr");
+				}
+				else {
+					System.out.println("not adding "+newList.destAddr.get(i).getHostAddress()+":"+newList.destPort.get(i)+" to mbr");
 				}
 			} catch (UnknownHostException e) {
 				e.printStackTrace();
@@ -65,6 +69,7 @@ public class DestinationAddressList {
 			if(destAddr.get(i).equals(addr) && destPort.get(i)==port){
 				destAddr.remove(i);
 				destPort.remove(i);
+				System.out.println("removing "+addr.getHostAddress()+":"+port+" from mbr");
 			}
 		}
 	}

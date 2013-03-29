@@ -36,7 +36,6 @@ public class GarbageCollectionThread extends Thread {
 	public void run() {
 		while (collect) { // This allows us to stop the thread if we need to
 			// Get the sessionState keys so we can walk the map
-			System.out.println("Collecting");
 			for (sessionKey sessionKey : sessionState.keySet()) {
 				// Check if this value has expired
 				UserContents userContents = sessionState.get(sessionKey);
