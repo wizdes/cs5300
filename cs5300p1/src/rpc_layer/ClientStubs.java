@@ -72,13 +72,14 @@ public class ClientStubs implements RPCInterface{
 		}
 		int callID = getUniqueCallID();
 		byte[] outBuf = Marshalling.marshall(createArrayObjects(callID, op, SID, version, data, discardTime, sz));
-		
+		InetAddress addr=null;
+		int portNum=-1;
 		for(int i = 0; i < dest.size(); i++){
 			try {
 				//I PICKED SENDING TWO SESSIONREADS by doing this
 				//(so I don't have to put the timeout and do additional logic later)
-				InetAddress addr = dest.getDestAddr(i);
-				int portNum = dest.getDestPort(i);
+				addr = dest.getDestAddr(i);
+				portNum = dest.getDestPort(i);
 				System.out.println(	addr.getHostAddress()+"=="+InetAddress.getLocalHost().getHostAddress()+" "+portNum+"=="+rpc_server_port);
 				if (addr.getHostAddress().equals(InetAddress.getLocalHost().getHostAddress()) && portNum==rpc_server_port){
 					continue;
@@ -111,7 +112,8 @@ public class ClientStubs implements RPCInterface{
 				rpcSocket.close();
 			}
 			if (recvPkt==null){
-					removeAddr(i);
+					removeAddr(addr,portNum);
+					i--;
 			}
 			else {
 				return recvPkt.getData();
@@ -148,8 +150,8 @@ public class ClientStubs implements RPCInterface{
 		return clientAddresses.getDestPort(index);
 	}
 	
-	public void removeAddr(int index){
-		clientAddresses.removeAddr(index);
+	public void removeAddr(InetAddress addr, int port){
+		clientAddresses.removeAddr(addr,port);
 	}
 	@Override
 	public byte[] sessionDelete(String SID, String version, DestinationAddressList dest) {

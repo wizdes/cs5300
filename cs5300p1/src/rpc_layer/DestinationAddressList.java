@@ -60,9 +60,13 @@ public class DestinationAddressList {
 		return destPort.get(index);
 	}
 	
-	public void removeAddr(int index){
-		destAddr.remove(index);
-		destPort.remove(index);
+	public void removeAddr(InetAddress addr, int port){
+		for (int i=0; i<destAddr.size(); i++){
+			if(destAddr.get(i).equals(addr) && destPort.get(i)==port){
+				destAddr.remove(i);
+				destPort.remove(i);
+			}
+		}
 	}
 	
 	public String toString(){

@@ -128,7 +128,8 @@ public class MsgCookieServlet extends HttpServlet {
 		// Build the cookie and add it to the response header
 		String clientResponseString="";
 		int backupServerIndex=-1;
-		while(!clientResponseString.contains("Written") && client.getNumServers() > 0){
+		int sentTo=0;
+		while(!clientResponseString.contains("Written") && client.getNumServers() > 0 && sentTo<k){
 			//TODO: handle the case where there is no place to write (no available backup)
 			
 			// expand this for 'k' elements
@@ -136,7 +137,10 @@ public class MsgCookieServlet extends HttpServlet {
 			
 			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), message, "" + expirationInSeconds, backupServerIndex);
 			System.out.print("Got resp "+resp);
-			if(resp != null) clientResponseString=new String(resp);
+			if(resp != null) {
+				clientResponseString=new String(resp);
+				sentTo++;
+			}
 			else {
 				backupServerIndex=-1;
 			}
