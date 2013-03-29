@@ -29,7 +29,7 @@ public class Marshalling {
 	 * @return Objects which properlly implement toString. (ex: Integer, String, Double, custom class, etc)
 	 * @throws UnsupportedEncodingException 
 	 */
-	static public Object[] unmarshall(byte[] bytes){
+	static public String[] unmarshall(byte[] bytes){
 		//This may return String[] instead.
 		String string;
 		try {
