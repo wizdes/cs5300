@@ -59,7 +59,7 @@ public class ServerStubs extends Thread{
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
 				Object[] elements = Marshalling.unmarshall(inBuf);
-				int returnServerPort = (Integer) elements[elements.length - 1];
+				int returnServerPort = Integer.parseInt((String)elements[elements.length - 1]);
 				clientAddresses.addDestAddress(returnAddr, returnServerPort);
 				OperationEnums operationCode = OperationEnums.valueOf((String) elements[1]);
 				
