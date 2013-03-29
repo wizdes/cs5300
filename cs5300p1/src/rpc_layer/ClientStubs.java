@@ -16,7 +16,7 @@ public class ClientStubs implements RPCInterface{
 	private int rpc_server_port;
 	private DestinationAddressList clientAddresses;
 	private Random random = new Random();
-	public final static int UDPTimeOutms = 2000;
+	public final static int UDPTimeOutms = 2000000;
 	
 	public void initClient(int rpc_server_port){
 		this.rpc_server_port=rpc_server_port;
@@ -42,7 +42,7 @@ public class ClientStubs implements RPCInterface{
 			retArray[0] = new Integer(sz);
 		}
 		else if(op == OperationEnums.operationSESSIONWRITE){
-			retArray = new Object[6];
+			retArray = new Object[7];
 			retArray[0] = callID;
 			retArray[1] = op;
 			retArray[2] = SID;
@@ -51,7 +51,7 @@ public class ClientStubs implements RPCInterface{
 			retArray[5] = discardTime;
 		}
 		else{
-			retArray = new Object[4];
+			retArray = new Object[5];
 			retArray[0] = callID;
 			retArray[1] = op;
 			retArray[2] = SID;

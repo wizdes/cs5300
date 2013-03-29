@@ -14,7 +14,7 @@ public class sessionKey {
 	public String getSessionID(){
 		return sessionID;
 	}
-	public int versionNumber(){
+	public int getVersionNumber(){
 		return versionNumber;
 	}
 	

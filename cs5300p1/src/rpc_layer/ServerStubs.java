@@ -113,11 +113,11 @@ public class ServerStubs extends Thread{
 		if(session_info == null){
 			//let's look a little deeper
 			sessionKey attemptAgain = null;
+			int highestVersion = 0;
 			for (sessionKey o : myData.sessionState.keySet()) {
 			    // ...
-				if(o.getSessionID().equals(SID)){
+				if(o.getSessionID().equals(SID) && o.getVersionNumber() >= highestVersion){
 					attemptAgain = o;
-					break;
 				}
 			}
 			if(attemptAgain != null) session_info = myData.sessionState.get(attemptAgain);
