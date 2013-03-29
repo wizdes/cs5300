@@ -94,6 +94,6 @@ public class SessionUtilities {
 		return replicatedResp;
 	}
 	public static String getServerID(String responseString) {
-		return responseString.split(":")[0];
+		return responseString.split(":")[1];
 	}
 }
