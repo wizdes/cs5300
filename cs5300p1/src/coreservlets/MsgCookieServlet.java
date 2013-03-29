@@ -179,7 +179,7 @@ public class MsgCookieServlet extends HttpServlet {
 		}
 		else {
 			// then 'create and replicate'
-			String[] responseString = (String[]) Marshalling.unmarshall(resp);
+			String[] responseString = Marshalling.unmarshall(resp);
 			if((responseString.length >= 3 && responseString[2] == "Not found") || responseString.length < 3){
 				createAndReplicateNewCookie(request, out, response);
 				return null;
@@ -230,6 +230,7 @@ public class MsgCookieServlet extends HttpServlet {
 			if(cookieContents.getDestinationAddressList().size()>0){
 				System.out.println("lol "+cookieContents.getDestinationAddressList().getDestAddr(0));
 				byte[] resp = client.sessionRead(sessionID, Integer.toString(cookieContents.getVersionNumber()), cookieContents.getDestinationAddressList());
+				System.out.println("Response: "+new String(resp));
 				if(resp==null){
 					createAndReplicateNewCookie(request, out, response);
 					return;
