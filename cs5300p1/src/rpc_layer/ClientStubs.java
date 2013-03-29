@@ -38,7 +38,7 @@ public class ClientStubs implements RPCInterface{
 			String data, String discardTime, int sz){
 		Object[] retArray = null;
 		if(op == OperationEnums.operationGETMEMBERS){
-			retArray = new Object[1];
+			retArray = new Object[2];
 			retArray[0] = new Integer(sz);
 		}
 		else if(op == OperationEnums.operationSESSIONWRITE){
@@ -57,6 +57,7 @@ public class ClientStubs implements RPCInterface{
 			retArray[2] = SID;
 			retArray[3] = version;
 		}
+		retArray[retArray.length - 1] = new Integer(rpc_server_port);
 		return retArray;		
 	}
 	

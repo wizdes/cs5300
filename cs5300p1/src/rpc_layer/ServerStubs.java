@@ -23,6 +23,7 @@ import rpc_layer.Marshalling;
 public class ServerStubs extends Thread{
 	DatagramSocket rpcSocket = null;
 	SessionData myData = null;
+	private DestinationAddressList clientAddresses;
 	
 	//returns the port number to be used on client stubs
 	public ServerStubs(SessionData data){
@@ -32,6 +33,10 @@ public class ServerStubs extends Thread{
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void addServerList(DestinationAddressList clientAddresses){
+		this.clientAddresses = clientAddresses;
 	}
 	
 	public int getServerPort(){
@@ -54,6 +59,8 @@ public class ServerStubs extends Thread{
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
 				Object[] elements = Marshalling.unmarshall(inBuf);
+				int returnServerPort = (Integer) elements[elements.length - 1];
+				clientAddresses.addDestAddress(returnAddr, returnServerPort);
 				OperationEnums operationCode = OperationEnums.valueOf((String) elements[1]);
 				
 				String[] outBufStr = null;
@@ -102,6 +109,20 @@ public class ServerStubs extends Thread{
 
 	public String[] sessionRead(String SID, String version) {
 		UserContents session_info = myData.sessionState.get(new sessionKey(SID, Integer.parseInt(version)));
+
+		if(session_info == null){
+			//let's look a little deeper
+			sessionKey attemptAgain = null;
+			for (sessionKey o : myData.sessionState.keySet()) {
+			    // ...
+				if(o.getSessionID().equals(SID)){
+					attemptAgain = o;
+					break;
+				}
+			}
+			if(attemptAgain != null) session_info = myData.sessionState.get(attemptAgain);
+			
+		}
 		if(session_info == null){
 			return constructNotFoundResponse();
 		}

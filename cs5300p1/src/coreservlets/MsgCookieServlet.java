@@ -30,7 +30,9 @@ public class MsgCookieServlet extends HttpServlet {
 	// Used creating cookies to protect session IDs
 	private int counter = 0;
 	private final String StandardCookieName = "CS5300PROJ1SESSION";
-	public final int timeOutSeconds = 6000;
+	public final int timeOutSeconds = 600;
+	public final int deltaMS = 50;
+	public final int gammaMS = 50;
 	private GarbageCollectionThread garbageCollectionThread;
 	private final String DefaultMessage = "Default Message.";
 	private String serverID;
@@ -55,6 +57,7 @@ public class MsgCookieServlet extends HttpServlet {
 		client = new ClientStubs();
 		setServerID();
 		client.initClient(server.getServerPort());
+		server.addServerList(client.getClientAddresses());
 		server.start();
 		
 		garbageCollectionThread = new GarbageCollectionThread(myData.sessionState);
@@ -125,6 +128,8 @@ public class MsgCookieServlet extends HttpServlet {
 		}
 
 		long expirationInSeconds = System.currentTimeMillis() / 1000 + (long) timeOutSeconds;
+		int cookieExpireTime = timeOutSeconds + deltaMS / 1000;
+		long discardTime = expirationInSeconds + 2 * deltaMS / 1000 + gammaMS / 1000;
 		// Build the cookie and add it to the response header
 		String clientResponseString="";
 		int backupServerIndex=-1;
@@ -135,7 +140,7 @@ public class MsgCookieServlet extends HttpServlet {
 			// expand this for 'k' elements
 			backupServerIndex = client.getRandomServerIndex();
 			
-			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), message, "" + expirationInSeconds, backupServerIndex);
+			byte[] resp = client.sessionWrite(sessionID, Integer.toString(versionNumber), message, "" + discardTime, backupServerIndex);
 			System.out.print("Got resp "+resp);
 			if(resp != null) {
 				clientResponseString=new String(resp);
@@ -156,12 +161,14 @@ public class MsgCookieServlet extends HttpServlet {
 		
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
 				sessionID, versionNumber, locationMetaDataStr);
+
+		retCookie.setMaxAge(cookieExpireTime);
 		response.addCookie(retCookie);
 		System.out.println("Making new cookie "+sessionID+","+versionNumber+","+locationMetaDataStr);
 		// We grab a lock in order to put the new session into our sessionState
 		// map
-		myData.createNewSession(sessionID, versionNumber, message, expirationInSeconds);
-		printWebsite(message, browserPrintWriter, sessionID, request, expirationInSeconds,foundOnserverID,locationMetadata);
+		myData.createNewSession(sessionID, versionNumber, message, discardTime);
+		printWebsite(message, browserPrintWriter, sessionID, request, discardTime,foundOnserverID,locationMetadata);
 	}
 	
 	public String handleBackupServerData(byte[] resp, HttpServletRequest request, PrintWriter out, HttpServletResponse response, String sessionID){
