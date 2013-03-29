@@ -66,17 +66,17 @@ public class ClientStubs implements RPCInterface{
 		DatagramPacket recvPkt = null;
 		DatagramSocket rpcSocket = null;
 
-		try {
-			rpcSocket = new DatagramSocket();
-		} catch (SocketException e) {
-			return null;
-		}
 		int callID = getUniqueCallID();
 		byte[] outBuf = Marshalling.marshall(createArrayObjects(callID, op, SID, version, data, discardTime, sz));
 		InetAddress addr=null;
 		int portNum=-1;
 		System.out.println("entering for");
 		for(int i = 0; i < dest.size(); i++){
+			try {
+				rpcSocket = new DatagramSocket();
+			} catch (SocketException e) {
+				return null;
+			}
 			try {
 				//I PICKED SENDING TWO SESSIONREADS by doing this
 				//(so I don't have to put the timeout and do additional logic later)

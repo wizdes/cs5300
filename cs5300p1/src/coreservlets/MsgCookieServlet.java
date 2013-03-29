@@ -251,7 +251,10 @@ public class MsgCookieServlet extends HttpServlet {
 		if(newCookie){
 			// if it's a logout, then flush it from my own and all the primary/backup from the cookie
 			DestinationAddressList dest = new DestinationAddressList();
-			SessionUtilities.parseLocationMetadata(cookieContents.getLocationMetadata(), dest);
+			String[] serverContainingCookie = cookieContents.getLocationMetadata().split(",");
+			for(String elt:serverContainingCookie){
+				SessionUtilities.parseLocationMetadata(elt, dest);
+			}
 			client.sessionDelete(sessionID, Integer.toString(cookieContents.getVersionNumber()), dest);
 
 			createAndReplicateNewCookie(request, out, response);
@@ -303,7 +306,7 @@ public class MsgCookieServlet extends HttpServlet {
 			// Logout
 			else if (paramValues.length == 1 && paramName.equals("ESC")) {
 				myData.sessionState.remove(cookieKey);
-				client.sessionDelete(sessionID, Integer.toString(versionNum), dest);
+				//client.sessionDelete(sessionID, Integer.toString(versionNum), dest);
 				return true;
 			}
 			
