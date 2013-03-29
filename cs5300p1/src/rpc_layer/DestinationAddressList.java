@@ -13,8 +13,14 @@ public class DestinationAddressList {
 	}
 	
 	public void addDestAddress(InetAddress newAddr, int newPort){
-		destAddr.add(newAddr);
-		destPort.add(newPort);
+		if(!contains(newAddr,newPort)){
+				destAddr.add(newAddr);
+				destPort.add(newPort);
+				System.out.println("adding "+newAddr+":"+newPort+" to mbr");
+		}
+		else {
+			System.out.println("not adding "+newAddr+":"+ServerStubs.getServerPort()+" to mbr");
+		}
 	}
 	
 	public void addList(DestinationAddressList newList){
@@ -32,14 +38,14 @@ public class DestinationAddressList {
 		
 	}
 	
-	public void mergeList(DestinationAddressList newList, int rpc_server_port){
+	public void mergeList(DestinationAddressList newList){
 		
 
 		for(int i = 0; i < newList.destAddr.size();i++){
 			try {
 				if(!contains(newList.destAddr.get(i),newList.destPort.get(i)) && 
 					!newList.destAddr.get(i).equals(InetAddress.getLocalHost().getHostAddress()) 
-					&& newList.destPort.get(i)!=rpc_server_port){
+					&& newList.destPort.get(i)!=ServerStubs.getServerPort()){
 					destAddr.add(newList.destAddr.get(i));
 					destPort.add(newList.destPort.get(i));
 					System.out.println("adding "+newList.destAddr.get(i).getHostAddress()+":"+newList.destPort.get(i)+" to mbr");
