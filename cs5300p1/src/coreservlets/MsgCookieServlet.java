@@ -232,7 +232,7 @@ public class MsgCookieServlet extends HttpServlet {
 
 		// at this point, we have the right data and everything
 		// We now process the request
-		boolean newCookie = processSession(request, response, cookieKey, source,cookieContents.getLocationMetadata());
+		boolean newCookie = processSession(request, response, cookieKey, source,cookieContents.getLocationMetadata(),cookieContents.getDestinationAddressList());
 		
 		// If we need a new cookie (from a logout click), we go here
 		if(newCookie){
@@ -254,7 +254,7 @@ public class MsgCookieServlet extends HttpServlet {
 	 * Parse the request information, and perform an action
 	 */
 	private boolean processSession(HttpServletRequest request, HttpServletResponse response, sessionKey cookieKey,String source,
-			String locationMetadata) {
+			String locationMetadata, DestinationAddressList dest) {
 		// processSession is always called inside a lock, so we don not need to
 		String sessionID = cookieKey.getSessionID();
 		int versionNum = myData.sessionState.get(cookieKey).getVersionNumber();
@@ -280,7 +280,7 @@ public class MsgCookieServlet extends HttpServlet {
 			}
 
 			// Replace
-			if (paramValues.length == 1 && paramName.equals("NewText")) {
+			else if (paramValues.length == 1 && paramName.equals("NewText")) {
 				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","").substring(300);
 				System.out.println(paramValue);
 				createAndReplicateCookie(request, response, paramValue, sessionID, versionNum + 1,source,locationMetadata);
@@ -288,13 +288,14 @@ public class MsgCookieServlet extends HttpServlet {
 			}
 
 			// Logout
-			if (paramValues.length == 1 && paramName.equals("ESC")) {
+			else if (paramValues.length == 1 && paramName.equals("ESC")) {
 				myData.sessionState.remove(cookieKey);
+				client.sessionDelete(sessionID, Integer.toString(versionNum), dest);
 				return true;
 			}
 			
 			// crash
-			if (paramValues.length == 1 && paramName.equals("crash")) {
+			else if (paramValues.length == 1 && paramName.equals("crash")) {
 					System.exit(0);
 			}
 		}

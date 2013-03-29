@@ -64,12 +64,17 @@ public class ClientStubs implements RPCInterface{
 			String discardTime, int sz, OperationEnums op, DestinationAddressList dest) { 
 		DatagramPacket recvPkt = null;
 		DatagramSocket rpcSocket = null;
+
 		try {
 			rpcSocket = new DatagramSocket();
-			int callID = getUniqueCallID();
-			byte[] outBuf = Marshalling.marshall(createArrayObjects(callID, op, SID, version, data, discardTime, sz));
-			
-			for(int i = 0; i < dest.size(); i++){
+		} catch (SocketException e) {
+			return null;
+		}
+		int callID = getUniqueCallID();
+		byte[] outBuf = Marshalling.marshall(createArrayObjects(callID, op, SID, version, data, discardTime, sz));
+		
+		for(int i = 0; i < dest.size(); i++){
+			try {
 				//I PICKED SENDING TWO SESSIONREADS by doing this
 				//(so I don't have to put the timeout and do additional logic later)
 				InetAddress addr = dest.getDestAddr(i);
@@ -83,10 +88,8 @@ public class ClientStubs implements RPCInterface{
 				System.out.println("Sending to "+addr+":"+portNum);
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, portNum);	
 				rpcSocket.send(sendPkt);
-			}
-			byte[] inBuf = new byte[UDPNetwork.MAX_UDP_PKT_SIZE];
-			recvPkt = new DatagramPacket(inBuf, inBuf.length);
-			try{
+				byte[] inBuf = new byte[UDPNetwork.MAX_UDP_PKT_SIZE];
+				recvPkt = new DatagramPacket(inBuf, inBuf.length);
 				Integer checkCallID = 0;
 				do{
 					recvPkt.setLength(inBuf.length);
@@ -103,22 +106,19 @@ public class ClientStubs implements RPCInterface{
 			catch(IOException ioe){
 				//other error
 				System.out.println("io exception");
+				recvPkt = null;
 			}
-		} catch (SocketException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally{
-			rpcSocket.close();
-		}
-		if (recvPkt==null){
-			for(int i = 0; i < dest.size(); i++){
-				removeAddr(i);
+			finally{
+				rpcSocket.close();
 			}
-			return null;
+			if (recvPkt==null){
+					removeAddr(i);
+			}
+			else {
+				return recvPkt.getData();
+			}
 		}
-		return recvPkt.getData();
+		return null;
 	}
 
 	@Override
