@@ -21,8 +21,8 @@ import data_layer.sessionKey;
 import rpc_layer.Marshalling;
 
 public class ServerStubs extends Thread{
-	DatagramSocket rpcSocket = null;
-	SessionData myData = null;
+	private static DatagramSocket rpcSocket = null;
+	private SessionData myData = null;
 	private DestinationAddressList clientAddresses;
 	
 	//returns the port number to be used on client stubs
@@ -39,7 +39,7 @@ public class ServerStubs extends Thread{
 		this.clientAddresses = clientAddresses;
 	}
 	
-	public int getServerPort(){
+	public static int getServerPort(){
 		return rpcSocket.getLocalPort();
 	}
 	public String getLocationMetaData(){

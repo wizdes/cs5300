@@ -115,7 +115,6 @@ public class ClientStubs implements RPCInterface{
 			}
 			if (recvPkt==null){
 					removeAddr(addr,portNum);
-					i--;
 			}
 			else {
 				return recvPkt.getData();
@@ -169,7 +168,7 @@ public class ClientStubs implements RPCInterface{
 	}
 
 	public void mergeList(DestinationAddressList dest){
-		clientAddresses.mergeList(dest,rpc_server_port);
+		clientAddresses.mergeList(dest);
 	}
 
 	public DestinationAddressList getClientAddresses(){
