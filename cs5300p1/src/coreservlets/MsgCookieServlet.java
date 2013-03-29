@@ -90,7 +90,7 @@ public class MsgCookieServlet extends HttpServlet {
 		}
 		browserPrintWriter
 				.print("Expires " + new Date(expiresInSeconds * 1000)+"<br/>");
-		browserPrintWriter.print("MbrSet: " +client.getClientAddresses());
+		browserPrintWriter.print("MbrSet: " +client.getClientAddresses()+"<br/>");
 		browserPrintWriter.print("IPP list: " +locationMetadata);
 		}
 	
@@ -281,7 +281,7 @@ public class MsgCookieServlet extends HttpServlet {
 
 			// Replace
 			else if (paramValues.length == 1 && paramName.equals("NewText")) {
-				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","").substring(300);
+				String paramValue = paramValues[0].replaceAll("[^(A-Za-z0-9\\.\\-_]","");
 				System.out.println(paramValue);
 				createAndReplicateCookie(request, response, paramValue, sessionID, versionNum + 1,source,locationMetadata);
 				return false;
