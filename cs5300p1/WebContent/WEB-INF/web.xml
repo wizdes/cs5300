@@ -10,6 +10,14 @@
        found, the result is server-specific (e.g., a  
        directory listing or a 404 error).  
   -->
+     <servlet>
+    <servlet-name>msgcookieservlet</servlet-name>
+    <servlet-class>coreservlets.MsgCookieServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>msgcookieservlet</servlet-name>
+    <url-pattern>/msgcookieservlet</url-pattern>
+  </servlet-mapping>
     <!-- Use the URL http://hostName/appName/MsgCookieServlet for MsgCookieServlet -->
   <welcome-file-list>
     <welcome-file>index.html</welcome-file>
