@@ -24,7 +24,6 @@ import rpc_layer.DestinationAddressList;
 import rpc_layer.Marshalling;
 import rpc_layer.ServerStubs;
 
-@WebServlet("/msgcookieservlet")
 public class MsgCookieServlet extends HttpServlet {
 	private static final long serialVersionUID = -7173084749627424244L;
 	// Used creating cookies to protect session IDs
@@ -185,8 +184,8 @@ public class MsgCookieServlet extends HttpServlet {
 				return null;
 			}
 			UserContents replicatedResponse = SessionUtilities.parseReplicatedData(responseString, sessionID);
-			myData.createNewSession(sessionID, replicatedResponse.getVersionNumber(), replicatedResponse.getMessage(), replicatedResponse.getVersionNumber());
-			return responseString[2];						
+			myData.createNewSession(sessionID, replicatedResponse.getVersionNumber(), replicatedResponse.getMessage(), 0);
+			return responseString[1];						
 		}
 	}
 	
@@ -227,7 +226,7 @@ public class MsgCookieServlet extends HttpServlet {
 		
 		// we need to make sure we have the latest version; if not, ping the server that does
 		if(session_info == null || cookieContents.getVersionNumber() > session_info.getVersionNumber()){
-			if(cookieContents.getDestinationAddressList().size()>0){
+			if(cookieContents.getDestinationAddressList().size() > 0){
 				System.out.println("lol "+cookieContents.getDestinationAddressList().getDestAddr(0));
 				byte[] resp = client.sessionRead(sessionID, Integer.toString(cookieContents.getVersionNumber()), cookieContents.getDestinationAddressList());
 				if(resp==null){
@@ -266,7 +265,7 @@ public class MsgCookieServlet extends HttpServlet {
 	/**
 	 * Parse the request information, and perform an action
 	 */
-	private boolean processSession(HttpServletRequest request, HttpServletResponse response, sessionKey cookieKey,String source,
+	private boolean processSession(HttpServletRequest request, HttpServletResponse response, sessionKey cookieKey, String source,
 			String locationMetadata, DestinationAddressList dest) {
 		// processSession is always called inside a lock, so we don not need to
 		String sessionID = cookieKey.getSessionID();
