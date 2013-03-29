@@ -1,6 +1,7 @@
 package rpc_layer;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 public class DestinationAddressList {
@@ -31,11 +32,19 @@ public class DestinationAddressList {
 		
 	}
 	
-	public void mergeList(DestinationAddressList newList){
+	public void mergeList(DestinationAddressList newList, int rpc_server_port){
+		
+
 		for(int i = 0; i < newList.destAddr.size();i++){
-			if(!contains(newList.destAddr.get(i))){
-				destAddr.add(newList.destAddr.get(i));
-				destPort.add(newList.destPort.get(i));
+			try {
+				if(!contains(newList.destAddr.get(i)) && 
+					!newList.destAddr.get(i).equals(InetAddress.getLocalHost().getHostAddress()) 
+					&& newList.destPort.get(i)!=rpc_server_port){
+					destAddr.add(newList.destAddr.get(i));
+					destPort.add(newList.destPort.get(i));
+				}
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -59,7 +68,7 @@ public class DestinationAddressList {
 	public String toString(){
 		String output="";
 		for (int i=0; i<destAddr.size(); i++){
-			output+=destAddr.get(i)+":"+destPort.get(i);
+			output+=destAddr.get(i).getHostAddress()+":"+destPort.get(i);
 		}
 		return output;
 	}

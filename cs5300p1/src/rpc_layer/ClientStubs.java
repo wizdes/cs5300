@@ -80,7 +80,6 @@ public class ClientStubs implements RPCInterface{
 				InetAddress addr = dest.getDestAddr(i);
 				int portNum = dest.getDestPort(i);
 				System.out.println(	addr.getHostAddress()+"=="+InetAddress.getLocalHost().getHostAddress()+" "+portNum+"=="+rpc_server_port);
-
 				if (addr.getHostAddress().equals(InetAddress.getLocalHost().getHostAddress()) && portNum==rpc_server_port){
 					continue;
 					
@@ -163,7 +162,7 @@ public class ClientStubs implements RPCInterface{
 	}
 
 	public void mergeList(DestinationAddressList dest){
-		clientAddresses.mergeList(dest);
+		clientAddresses.mergeList(dest,rpc_server_port);
 	}
 
 	public DestinationAddressList getClientAddresses(){
