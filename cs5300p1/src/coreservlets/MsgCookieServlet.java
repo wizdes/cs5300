@@ -107,6 +107,8 @@ public class MsgCookieServlet extends HttpServlet {
 	public void createAndReplicateCookie(HttpServletRequest request, HttpServletResponse response,
 			String message, String sessionID, int versionNumber, String foundOnserverID,
 			String locationMetadata) {
+		//remove the old session Key stuffs
+		myData.sessionState.remove(new sessionKey(sessionID, versionNumber - 1));
 		PrintWriter browserPrintWriter = null;
 		
 		try {
