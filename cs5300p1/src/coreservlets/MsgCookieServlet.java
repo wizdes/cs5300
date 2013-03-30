@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.concurrent.locks.ReentrantLock;
@@ -43,7 +44,7 @@ public class MsgCookieServlet extends HttpServlet {
 	private ClientStubs client = null;
 	private ServerStubs server = null;
 	
-	private int k = 2;
+	private int k = 3;
 
 	/**
 	 * This init is called the first time the servlet is launched
@@ -135,7 +136,9 @@ public class MsgCookieServlet extends HttpServlet {
 		String clientResponseString="";
 		int backupServerIndex=-1;
 		int sentTo=0;
-		while(client.getNumServers() > 0 && sentTo<k){
+		String locationMetaDataStr = server.getLocationMetaData();
+		ArrayList<Integer> selectedServerIndexes= new ArrayList<Integer>();
+		while(client.getNumServers() > sentTo && sentTo<k){
 			//TODO: handle the case where there is no place to write (no available backup)
 			
 			// expand this for 'k' elements
@@ -145,8 +148,10 @@ public class MsgCookieServlet extends HttpServlet {
 			System.out.print("Got resp "+resp);
 			if(resp != null) {
 				clientResponseString=new String(resp);
-				if(clientResponseString.contains("Written")){
+				if(clientResponseString.contains("Written") && !selectedServerIndexes.contains(backupServerIndex)){
 					sentTo++;
+					selectedServerIndexes.add(backupServerIndex);
+					locationMetaDataStr += ","+client.getDestAddr(backupServerIndex).getHostAddress()+":"+client.getDestPort(backupServerIndex);
 				}
 			}
 			else {
@@ -154,11 +159,7 @@ public class MsgCookieServlet extends HttpServlet {
 			}
 		} 
 		
-		String locationMetaDataStr = server.getLocationMetaData();
 		System.out.println("LOCATION METADATA IS: " + locationMetaDataStr);
-		if(backupServerIndex != -1){
-			locationMetaDataStr += ","+client.getDestAddr(backupServerIndex).getHostAddress()+":"+client.getDestPort(backupServerIndex);
-		}
 		
 		Cookie retCookie = SessionUtilities.createCookie(StandardCookieName,
 				sessionID, versionNumber, locationMetaDataStr);
@@ -262,8 +263,9 @@ public class MsgCookieServlet extends HttpServlet {
 			createAndReplicateNewCookie(request, out, response);
 			return;				
 		}
-		
-		System.out.println(sessionID + ":" + myData.sessionState.get(cookieKey).getVersionNumber());
+		if(myData.sessionState.get(cookieKey)!=null){
+			System.out.println(sessionID + ":" + myData.sessionState.get(cookieKey).getVersionNumber());
+		}
 		return;
 	}
 
