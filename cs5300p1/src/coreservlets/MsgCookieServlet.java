@@ -5,16 +5,12 @@ import data_layer.sessionKey;
 
 import java.io.*;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.concurrent.locks.ReentrantLock;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -352,7 +348,7 @@ public class MsgCookieServlet extends HttpServlet {
 	
 	private void setServerID(){
 		try {
-			serverID=InetAddress.getLocalHost().getHostAddress()+":"+server.getServerPort();
+			serverID=InetAddress.getLocalHost().getHostAddress()+":"+ServerStubs.getServerPort();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}

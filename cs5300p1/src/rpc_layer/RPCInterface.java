@@ -1,8 +1,5 @@
 package rpc_layer;
 
-import java.net.DatagramPacket;
-import java.util.Set;
-
 public interface RPCInterface {	
 	/**
 	 * 

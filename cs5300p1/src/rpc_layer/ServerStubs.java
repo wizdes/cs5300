@@ -1,17 +1,12 @@
 package rpc_layer;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.concurrent.locks.ReentrantLock;
-
 import network_layer.UDPNetwork;
 
 import coreservlets.UserContents;

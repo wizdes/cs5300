@@ -1,8 +1,6 @@
 package coreservlets;
 
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.ReentrantLock;
-
 import coreservlets.UserContents;
 import data_layer.sessionKey;
 

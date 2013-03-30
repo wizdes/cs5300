@@ -1,7 +1,5 @@
 package testCases;
 
-import static org.junit.Assert.*;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -23,7 +21,7 @@ public class RPCJUnitTest {
 		server.start();
 		
 		DestinationAddressList dest = new DestinationAddressList();
-		dest.addDestAddress(InetAddress.getLocalHost(), serverStub.getServerPort());
+		dest.addDestAddress(InetAddress.getLocalHost(), ServerStubs.getServerPort());
 	
 		System.out.println("READING.");					
 		String[] resp = (String[]) Marshalling.unmarshall(client.sessionRead("2_192.168.1.2", "8", dest));
