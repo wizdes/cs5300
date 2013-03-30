@@ -44,7 +44,7 @@ public class MsgCookieServlet extends HttpServlet {
 	private ClientStubs client = null;
 	private ServerStubs server = null;
 	
-	private int k = 3;
+	private int k = 2;
 
 	/**
 	 * This init is called the first time the servlet is launched
@@ -138,7 +138,7 @@ public class MsgCookieServlet extends HttpServlet {
 		int sentTo=0;
 		String locationMetaDataStr = server.getLocationMetaData();
 		ArrayList<Integer> selectedServerIndexes= new ArrayList<Integer>();
-		while(client.getNumServers() > sentTo && sentTo<k){
+		while(client.getNumServers() > sentTo && sentTo<k+1){
 			//TODO: handle the case where there is no place to write (no available backup)
 			
 			// expand this for 'k' elements
