@@ -84,6 +84,9 @@ public class DestinationAddressList {
 		String output="";
 		for (int i=0; i<destAddr.size(); i++){
 			output+=destAddr.get(i).getHostAddress()+":"+destPort.get(i);
+			if(i<(destAddr.size()-1)){
+				output+=", ";
+			}
 		}
 		return output;
 	}
