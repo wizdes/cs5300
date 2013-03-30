@@ -66,6 +66,8 @@ public class SessionUtilities {
 		String[] contents = cookie.getValue().split(",");
 		CookieContents cookieContents = new CookieContents(
 				contents[0], Integer.parseInt(contents[1]));
+		// this gets the location metadata (if there isn't any, then contents.length == 2)
+		// remember Cookies are Strings
 		if(contents.length > 2){
 			DestinationAddressList destinationAddressList = new DestinationAddressList();
 			for (int i=2; i<contents.length; i++){

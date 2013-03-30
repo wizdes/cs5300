@@ -167,7 +167,7 @@ public class MsgCookieServlet extends HttpServlet {
 		// We grab a lock in order to put the new session into our sessionState
 		// map
 		myData.createNewSession(sessionID, versionNumber, message, discardTime);
-		printWebsite(message, browserPrintWriter, sessionID, request, discardTime,foundOnserverID,locationMetadata);
+		printWebsite(message, browserPrintWriter, sessionID, request, discardTime,foundOnserverID,locationMetaDataStr);
 	}
 	
 	public String handleBackupServerData(byte[] resp, HttpServletRequest request, PrintWriter out, HttpServletResponse response, String sessionID){
@@ -178,7 +178,7 @@ public class MsgCookieServlet extends HttpServlet {
 		}
 		else {
 			// then 'create and replicate'
-			String[] responseString = Marshalling.unmarshall(resp);
+			String[] responseString = (String[]) Marshalling.unmarshall(resp);
 			if((responseString.length >= 3 && responseString[2] == "Not found") || responseString.length < 3){
 				createAndReplicateNewCookie(request, out, response);
 				return null;
