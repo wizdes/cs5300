@@ -16,7 +16,7 @@ public class ClientStubs implements RPCInterface{
 	private int rpc_server_port;
 	private DestinationAddressList clientAddresses;
 	private Random random = new Random();
-	public final static int UDPTimeOutms = 2000000;
+	public final static int UDPTimeOutms = 2000;
 	
 	public void initClient(int rpc_server_port){
 		this.rpc_server_port=rpc_server_port;
@@ -103,6 +103,7 @@ public class ClientStubs implements RPCInterface{
 			}
 			catch(InterruptedIOException iioe){
 				//timeout
+				System.out.println("timeOut");
 				recvPkt = null;
 			}
 			catch(IOException ioe){
