@@ -56,7 +56,7 @@ public class MsgCookieServlet extends HttpServlet {
 		server = new ServerStubs(myData);
 		client = new ClientStubs();
 		setServerID();
-		client.initClient(server.getServerPort());
+		client.initClient(ServerStubs.getServerPort());
 		server.addServerList(client.getClientAddresses());
 		server.start();
 		
@@ -194,11 +194,26 @@ public class MsgCookieServlet extends HttpServlet {
 		}
 	}
 	
+	public void handleGetMessageAdd(byte[] resp){
+		String[] responseString = (String[]) Marshalling.unmarshall(resp);
+		for (int i=3; i<responseString.length; i++){
+			String [] ipandport =responseString[i].split(":");
+			try {
+				client.getClientAddresses().addDestAddress(InetAddress.getByName(ipandport[0]), Integer.parseInt(ipandport[1]));
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
+		boolean mbrListEmpty = false;
 		if(request.getCookies()!=null){
 			System.out.println("Got this cookie: \n"+SessionUtilities.GetRequestCookie(
 							StandardCookieName, request.getCookies()).getValue());
@@ -210,6 +225,9 @@ public class MsgCookieServlet extends HttpServlet {
 		if (cookieContents == null) {
 			createAndReplicateNewCookie(request, out, response);
 			return;
+		}
+		if(client.getClientAddresses().size()==0){
+			mbrListEmpty=true;
 		}
 		client.mergeList(cookieContents.getDestinationAddressList());
 		//let's try to get the data
@@ -239,6 +257,13 @@ public class MsgCookieServlet extends HttpServlet {
 				if(resp==null){
 					createAndReplicateNewCookie(request, out, response);
 					return;
+				}
+				if(mbrListEmpty){
+					byte [] resp1 =client.getMembers(20, cookieContents.getDestinationAddressList());
+					if(resp1!=null){
+						System.out.println("Response1: "+new String(resp1));
+						handleGetMessageAdd(resp1);
+					}
 				}
 				source = handleBackupServerData(resp, request, out, response, sessionID);
 				if(source == null) return;

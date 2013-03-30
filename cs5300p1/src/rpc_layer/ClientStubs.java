@@ -24,10 +24,6 @@ public class ClientStubs implements RPCInterface{
 		clientAddresses = new DestinationAddressList();
 	}
 	
-	public void addDestinationPort(DestinationAddressList newAddresses){
-		clientAddresses.addList(newAddresses);
-	}
-	
 	public int getUniqueCallID(){
 		synchronized(this){
 			return callIDCounter++;
@@ -38,8 +34,10 @@ public class ClientStubs implements RPCInterface{
 			String data, String discardTime, int sz){
 		Object[] retArray = null;
 		if(op == OperationEnums.operationGETMEMBERS){
-			retArray = new Object[2];
-			retArray[0] = new Integer(sz);
+			retArray = new Object[3];
+			retArray[0] = callID;
+			retArray[1] = op;
+			retArray[2] = new Integer(sz);
 		}
 		else if(op == OperationEnums.operationSESSIONWRITE){
 			retArray = new Object[7];
@@ -165,6 +163,7 @@ public class ClientStubs implements RPCInterface{
 
 	@Override
 	public byte[] getMembers(int sz, DestinationAddressList dest) {
+		System.out.println("Doing getMembers");
 		return sessionAction(null, null, null, null, sz, OperationEnums.operationGETMEMBERS, dest);
 	}
 

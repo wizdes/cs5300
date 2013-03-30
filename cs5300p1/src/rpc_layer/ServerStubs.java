@@ -58,6 +58,7 @@ public class ServerStubs extends Thread{
 				rpcSocket.receive(recvPkt);
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
+				System.out.println("Got "+new String(inBuf));
 				Object[] elements = Marshalling.unmarshall(inBuf);
 				int returnServerPort = Integer.parseInt((String)elements[elements.length - 1]);
 				clientAddresses.addDestAddress(returnAddr, returnServerPort);
@@ -75,7 +76,7 @@ public class ServerStubs extends Thread{
 						outBufStr = sessionDelete((String)elements[2], (String)elements[3]);
 						break;
 					case operationGETMEMBERS:
-						outBufStr = getMembers((Integer)elements[2]);
+						outBufStr = getMembers(Integer.parseInt((String)elements[2]));
 						break;
 					default:
 						break;						
@@ -164,8 +165,11 @@ public class ServerStubs extends Thread{
 	}
 
 	public String[] getMembers(int sz) {
-		// TODO BONUS; get this done then
-		return null;
+		String [] members= new String[clientAddresses.size() < sz ? clientAddresses.size() : sz];
+		for (int i=0; i<(clientAddresses.size() < sz ? clientAddresses.size() : sz); i++){
+			members[i]=clientAddresses.getDestAddr(i)+":"+clientAddresses.getDestPort(i);
+		}
+		return members;
 	}
 
 }
