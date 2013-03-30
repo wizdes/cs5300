@@ -82,7 +82,7 @@ public class ServerStubs extends Thread{
 				}
 				String[] tempList = new String[outBufStr.length + 2];
 				tempList[0] = (String) elements[0];
-				tempList[1] = InetAddress.getLocalHost().getHostName()+":"+rpcSocket.getLocalPort();
+				tempList[1] = InetAddress.getLocalHost().getHostAddress()+":"+rpcSocket.getLocalPort();
 				//tempList[1] = 
 				System.arraycopy(outBufStr, 0, tempList, 2, outBufStr.length);
 				
