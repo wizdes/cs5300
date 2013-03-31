@@ -135,8 +135,7 @@ public class MsgCookieServlet extends HttpServlet {
 				// We get the counter, we need to do so with a lock first so that it
 				// cannot change from under us
 				myData.counterLock.lock();
-				sessionID = request.getLocalAddr() + ":"
-						+ request.getLocalPort() + Integer.toString(counter++);
+				sessionID = server.getLocationMetaData()+ ":" + Integer.toString(counter++);
 			} finally {
 				// Unlock the counter
 				myData.counterLock.unlock();
