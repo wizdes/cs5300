@@ -118,8 +118,10 @@ Our Elastic Beanstalk setup procedure:
 1) Create a new environment 
 2) setting the container type and uploading our .war file
 3) When the Environment is created, go into 'Edit Configuration'. Here, set the minimum number of instances to 3. 
-4) Next, modify the Security Group (in the EC2 console) to have all inbound UDP connections on ports 0-65535 accessible.
+4) Next, modify the Security Group (in the EC2 console) to have all inbound UDP connections on ports 0-65535 accessible from source 192.168.2.0/24.
 5) Test the Beanstalk instance of our code.
+
+It is important to note that 'crashing' a server on Beanstalk will produce some unexpected failure on the Load Balancer. This is because the Load Balancer is unable to detect that a server has failed immediately after the failure and may still redirect some requests to that server. Since we cannot configure the Load Balancer, one can expect to wait a short amount of time to continue normal operations after a crash.
 
 4) Design decisions
 
