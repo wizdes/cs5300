@@ -118,7 +118,7 @@ Our Elastic Beanstalk setup procedure:
 1) Create a new environment 
 2) setting the container type and uploading our .war file
 3) When the Environment is created, go into 'Edit Configuration'. Here, set the minimum number of instances to 3. 
-4) Next, modify the Security Group to have all inbound UDP connections on ports 0-65525 accessible.
+4) Next, modify the Security Group (in the EC2 console) to have all inbound UDP connections on ports 0-65535 accessible.
 5) Test the Beanstalk instance of our code.
 
 4) Design decisions
