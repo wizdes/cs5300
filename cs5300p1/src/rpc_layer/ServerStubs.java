@@ -113,9 +113,11 @@ public class ServerStubs extends Thread{
 			    // ...
 				if(o.getSessionID().equals(SID) && o.getVersionNumber() >= highestVersion){
 					attemptAgain = o;
+					highestVersion = o.getVersionNumber();
 				}
 			}
-			if(attemptAgain != null) session_info = myData.sessionState.get(attemptAgain);
+			if(highestVersion > Integer.parseInt(version)) session_info = myData.sessionState.get(attemptAgain);
+			else session_info = null;
 			
 		}
 		if(session_info == null){

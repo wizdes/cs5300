@@ -264,6 +264,21 @@ public class MsgCookieServlet extends HttpServlet {
 			return;
 		}
 		
+		if(session_info == null){
+			// check for type 3 failure here
+			int highestVersion = 0;
+			for (sessionKey o : myData.sessionState.keySet()) {
+			    // ...
+				if(o.getSessionID().equals(cookieContents.getSessionID()) && o.getVersionNumber() >= highestVersion){
+					cookieKey = o;
+					highestVersion = o.getVersionNumber();
+				}
+			}
+			if(highestVersion > cookieContents.getVersionNumber()) session_info = myData.sessionState.get(cookieKey);
+			else session_info = null;
+		}
+		// end type 3 failure check here
+		
 		String sessionID = cookieKey.getSessionID();
 		
 		String source = "cache";
@@ -297,7 +312,7 @@ public class MsgCookieServlet extends HttpServlet {
 
 		// at this point, we have the right data and everything
 		// We now process the request
-		boolean newCookie = processSession(request, response, cookieKey, source,cookieContents.getLocationMetadata(),cookieContents.getDestinationAddressList());
+		boolean newCookie = processSession(request, response, cookieKey, source, cookieContents.getLocationMetadata(), cookieContents.getDestinationAddressList());
 		
 		// If we need a new cookie (from a logout click), we go here
 		if(newCookie){
