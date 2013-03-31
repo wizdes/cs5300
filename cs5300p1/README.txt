@@ -27,11 +27,10 @@ Table of Contents
 			2) Refresh functionality across servers
 			3) Logout functionality across servers
 			4) Crash
-		iii) Three servers, local
-			1) Replace is replicated properly
-		iv) Additional test cases
+		iii) Additional test cases
 	b) Beanstalk
-4) Extra Credit Options
+4) Design decisions
+5) Extra Credit Options
 	a) Get Members
 	b) k-resiliency
 
@@ -84,29 +83,50 @@ To gain assurance of our system, we tested on both local machines as well as on 
 
 a) Local
 
+We tested our program locally with several different configurations aimed at looking at several different functionalities.
+
 i) One server, local
+
 1) Replace functionality
+First start the server. Next type a message in the input field and press the replace button. The page should give a new expiration and the inputted string.
 2) Refresh functionality
+First start the server. Next type a message in the input field and press the replace button. The page should give a new expiration and the inputted string. Next, press refresh. A new expiration should've appeared.
 3) Logout functionality
+First start the server. Next type a message in the input field and press the replace button. The page should give a new expiration and the inputted string. Press the Logout button. You should now see the default message.
 4) Crash functionality
+Press the crash button. You should no longer be able to access the servlet.
 
 ii) Two servers, local
-1) Replace is replicated
-2) Refresh functionality across servers
-3) Logout functionality across servers
-4) Crash
 
-iii) Three servers, local
-1) Replace is replicated properly
+1) Replace is replicated
+On server A, enter a message into the field and press 'Replace'. On server B, access the servlet and see your message on that server. The data should show it is on both servers.
+2) Refresh functionality across servers
+On server A, enter a message into the field and press 'Replace'. On server B, access the servlet and see your message on that server. The data should show it is on both servers. On server B, replace the message with a new message. Next, on server A, press 'Refresh'. You should see the new message on server A. 
+3) Logout functionality across servers
+On server A, enter a message into the field and press 'Replace'. On server B, access the servlet and see your message on that server. The data should show it is on both servers. On server B, press 'Logout'. On server A, you should see the default message.
+4) Crash
+On server A, enter a message into the field and press 'Replace'. On server B, access the servlet and see your message on that server. The data should show it is on both servers. Now press 'Crash' on server B. Server A should still have your session. 
 
 iv) Additional test cases
 1) Confirm that when a server gets a request, it gets added to its group membership
 2) When a client gets a cookie, it adds its location metadata to its group membership
 3) When a server gets a timeout, the timed out server is removed from the group membership
+4) Session timeouts remove the session from being accessed
 
 b) Beanstalk
+Our Elastic Beanstalk setup procedure:
+1) Create a new environment 
+2) setting the container type and uploading our .war file
+3) When the Environment is created, go into 'Edit Configuration'. Here, set the minimum number of instances to 3. 
+4) Next, modify the Security Group to have all inbound UDP connections on ports 0-65525 accessible.
+5) Test the Beanstalk instance of our code.
 
-4) Extra Credit Options
+4) Design decisions
+
+We chose delta = 5000 milliseconds so it represents the maximum allowable difference between any pair of client and server clocks plus the maximum allowable clock drift over a session timeout interval.
+We also chose gamma = 50 milliseconds accounting for the communication and processing time associated with the SessionWrite call. 
+
+5) Extra Credit Options
 
 For this project, we have implemented two extra credit features: Get Members, and k-resiliency.
 
