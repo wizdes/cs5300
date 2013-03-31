@@ -48,6 +48,9 @@ public class MsgCookieServlet extends HttpServlet {
 	 */
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+		//sets k from the configurable Constants.java file
+		k = coreservlets.Contants.k;
+		
 		// this sets a unique clientID per host
 		myData = new SessionData();
 		server = new ServerStubs(myData);
