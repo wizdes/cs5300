@@ -8,15 +8,15 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Random;
 
-import network_layer.UDPNetwork;
 
-public class ClientStubs implements RPCInterface{
+public class ClientStubs{
 	
 	private int callIDCounter;
 	private int rpc_server_port;
 	private DestinationAddressList clientAddresses;
 	private Random random = new Random();
 	public final static int UDPTimeOutms = 2000;
+	public static final int MAX_UDP_PKT_SIZE = 512;	//Bytes
 	
 	public void initClient(int rpc_server_port){
 		this.rpc_server_port=rpc_server_port;
@@ -88,7 +88,7 @@ public class ClientStubs implements RPCInterface{
 				System.out.println("Sending to "+addr+":"+portNum);
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, addr, portNum);	
 				rpcSocket.send(sendPkt);
-				byte[] inBuf = new byte[UDPNetwork.MAX_UDP_PKT_SIZE];
+				byte[] inBuf = new byte[MAX_UDP_PKT_SIZE];
 				recvPkt = new DatagramPacket(inBuf, inBuf.length);
 				Integer checkCallID = 0;
 				do{
@@ -122,13 +122,11 @@ public class ClientStubs implements RPCInterface{
 		return null;
 	}
 
-	@Override
 	public byte[] sessionRead(String SID, String version, DestinationAddressList dest) { 
 		System.out.println("Doing read");
 		return sessionAction(SID, version, null, null, -1, OperationEnums.operationSESSIONREAD, dest);
 	}
 
-	@Override
 	public byte[] sessionWrite(String SID, String version, String data, String discardTime, int serverIndex) {
 		System.out.println("Doing write");
 		if(clientAddresses.size() == 0) return null;
@@ -155,13 +153,11 @@ public class ClientStubs implements RPCInterface{
 	public void removeAddr(InetAddress addr, int port){
 		clientAddresses.removeAddr(addr,port);
 	}
-	@Override
 	public byte[] sessionDelete(String SID, String version, DestinationAddressList dest) {
 		System.out.println("Doing delete");
 		return sessionAction(SID, version, null, null, -1, OperationEnums.operationDELETE, dest);
 	}
 
-	@Override
 	public byte[] getMembers(int sz, DestinationAddressList dest) {
 		System.out.println("Doing getMembers");
 		return sessionAction(null, null, null, null, sz, OperationEnums.operationGETMEMBERS, dest);

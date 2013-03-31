@@ -7,8 +7,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import network_layer.UDPNetwork;
-
 import coreservlets.UserContents;
 
 import data_layer.SessionData;
@@ -19,7 +17,8 @@ public class ServerStubs extends Thread{
 	private static DatagramSocket rpcSocket = null;
 	private SessionData myData = null;
 	private DestinationAddressList clientAddresses;
-	
+	public static final int MAX_UDP_PKT_SIZE = 512;	//Bytes
+
 	//returns the port number to be used on client stubs
 	public ServerStubs(SessionData data){
 		myData = data;
@@ -48,7 +47,7 @@ public class ServerStubs extends Thread{
 	public void run(){
 		while(true){
 			try {
-				byte[] inBuf = new byte[UDPNetwork.MAX_UDP_PKT_SIZE];
+				byte[] inBuf = new byte[MAX_UDP_PKT_SIZE];
 				DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 				rpcSocket.receive(recvPkt);
 				InetAddress returnAddr = recvPkt.getAddress();
