@@ -124,7 +124,7 @@ Our Elastic Beanstalk setup procedure:
 
 It is important to note that 'crashing' a server on Beanstalk will produce some unexpected failure on the Load Balancer. This is because the Load Balancer is unable to detect that a server has failed immediately after the failure and may still redirect some requests to that server. Since we cannot configure the Load Balancer, one can expect to wait a short amount of time to continue normal operations after a crash.
 
-Another issue with Beanstalk is the fact that the Load Balancer tries to send requests to the same server. This is an issue since if the client only talks to one server, the server does not get the opportunity to talk to other servers; this is like the situation with newly-booted servers. To resolve this, a client can create a session, wait between 10 - 15 seconds and refresh again until the displayed memberSet has more elements. 
+Another issue with Beanstalk is the fact that the Load Balancer tries to send requests to the same server. This is an issue since if the client only talks to one server, the server does not get the opportunity to talk to other servers; this is like the situation with newly-booted servers. To resolve this, a client can create a session and refresh until the displayed memberSet has more elements. 
 
 4) Design decisions
 
@@ -140,5 +140,5 @@ a) Get Members
 	The IPPprimary server then sends back the member list, and the original server adds those members to its list.
 b) k-resiliency
 	k-resilience is implemented by having every function that reads from servers in a for loop that walks through the received ip list.  
-	The only part where k is used is that the server will designate k-1 backups and send each a sessionWrite().
+	The only part where k is used is that the server will designate k-1 backups and send each a sessionWrite(). In the Java class 'Contants.java', a user can change the resiliency of the system by modifying the variable 'k'.
 
