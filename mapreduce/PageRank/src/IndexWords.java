@@ -18,6 +18,7 @@
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
@@ -73,10 +74,10 @@ public class IndexWords extends Configured implements Tool {
     	String[] valueStrArray = value.toString().split(" ");
     	String u = key.toString();
     	String v = valueStrArray[1];
-    	float deg = (float) (Float.parseFloat(valueStrArray[0]) * 1.0 / Float.parseFloat(valueStrArray[2]));
+    	float prDivDeg = (float) (Float.parseFloat(valueStrArray[0]) * 1.0 / Float.parseFloat(valueStrArray[2]));
     	//spit out what we want
     	output.collect(new Text(u), new Text(v + " 0 " + valueStrArray[0]));
-    	output.collect(new Text(v), new Text(Float.toString(deg) + " " + valueStrArray[2]));
+    	output.collect(new Text(v), new Text(Float.toString(prDivDeg) + " " + valueStrArray[2]));
     }
   }
   
@@ -91,7 +92,7 @@ public class IndexWords extends Configured implements Tool {
     	double sum = 0;
     	ArrayList<String> toSend = new ArrayList<String>();
     	
-    	int deg = -1;
+    	int deg = 1;
     	//System.out.println(key.toString() + "->");
     	double oldPR = 0;
 	    while (values.hasNext()) {
@@ -99,11 +100,11 @@ public class IndexWords extends Configured implements Tool {
 	    	String[] eltArr = x.split(" ");
 	    	//System.out.println(x);
 	    	if(eltArr.length == 3){
-	    		//System.out.println("just one!");
 	    		toSend.add(eltArr[0]);
 	    		oldPR = Double.parseDouble(eltArr[2]);
 	    	}
 	    	else {
+	    		System.out.println("sum");
 	    		sum = sum + Double.parseDouble(eltArr[0]);
 	    		deg = Integer.parseInt(eltArr[1]);
 	    	}
@@ -126,7 +127,7 @@ public class IndexWords extends Configured implements Tool {
   	
 	  checkWords = new String[args.length-2];
 	  
-	  int numIter = 20;
+	  int numIter = 1;
 	  
 	  Path input = new Path(args[0]);
 	  
@@ -221,11 +222,32 @@ public class IndexWords extends Configured implements Tool {
 		e.printStackTrace();
 	  }
   }
+  public static void cleanFiles(String folder, String dirName){
+	  String[] files =new File(folder).list();
+	  for(String filename : files){
+		  if(filename.contains(dirName)){
+			  try {
+				delete(new File(filename));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		  }
+	  }
+  }
+  static void delete(File f) throws IOException {
+	  if (f.isDirectory()) {
+	    for (File c : f.listFiles())
+	      delete(c);
+	  }
+	  if (!f.delete())
+	    throw new FileNotFoundException("Failed to delete file: " + f);
+	}
   public static void main(String[] args) throws Exception {
 	  //filterFile("edges.txt","ms2786edges.txt");
 	  //filterFile("ms2786edges.txt","usethese.txt",0.0,.05);
 	  //formatFile("usethese.txt","ourFormat.txt");
-
+	  cleanFiles("./",args[1]);
 	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
      System.exit(res);
   }
