@@ -19,7 +19,7 @@ local.properties
 .settings/
 .loadpath
 *output*
-
+mapreduce/PageRank/*.txt
 # External tool builders
 .externalToolBuilders/
 

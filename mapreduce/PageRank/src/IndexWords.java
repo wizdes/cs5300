@@ -69,7 +69,7 @@ public class IndexWords extends Configured implements Tool {
                     OutputCollector<Text, Text> output,
                     Reporter reporter) throws IOException {
     	
-    	System.out.println("in Map");
+    	//System.out.println("in Map");
     	String[] valueStrArray = value.toString().split(" ");
     	String u = key.toString();
     	String v = valueStrArray[1];
@@ -87,17 +87,17 @@ public class IndexWords extends Configured implements Tool {
     public void reduce(Text key, Iterator<Text> values,
                        OutputCollector<Text, Text> output,
                        Reporter reporter) throws IOException {
-    	System.out.println("In Reduce");
+    	//System.out.println("In Reduce");
     	double sum = 0;
     	ArrayList<String> toSend = new ArrayList<String>();
     	
     	int deg = -1;
-    	System.out.println(key.toString() + "->");
+    	//System.out.println(key.toString() + "->");
     	double oldPR = 0;
 	    while (values.hasNext()) {
 	    	String x = values.next().toString();
 	    	String[] eltArr = x.split(" ");
-	    	System.out.println(x);
+	    	//System.out.println(x);
 	    	if(eltArr.length == 3){
 	    		//System.out.println("just one!");
 	    		toSend.add(eltArr[0]);
@@ -110,10 +110,10 @@ public class IndexWords extends Configured implements Tool {
     	}
 	    double newPR = (1 - d) * 1.0 / N + d * sum;
 	    long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
-	    System.out.println(reporter.getCounter(RecordCounters.RESIDUAL_COUNTER)+" + res long"+residualLong);
+	    //System.out.println(reporter.getCounter(RecordCounters.RESIDUAL_COUNTER)+" + res long"+residualLong);
 	    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
 	    for(String s:toSend){
-	    	System.out.println("EMIT-" + key.toString() + ":" + Double.toString(newPR) + " " + s + " " + Integer.toString(deg));
+	    	//System.out.println("EMIT-" + key.toString() + ":" + Double.toString(newPR) + " " + s + " " + Integer.toString(deg));
 	    	output.collect(key, new Text(new String(Double.toString(newPR) + " " + s + " " + Integer.toString(deg))));
 	    }
     }
@@ -165,7 +165,7 @@ public class IndexWords extends Configured implements Tool {
 		BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(writeOut), Charset.forName("UTF-8"));
 		for(String line : lines){
 			if(selectInputLine(Double.parseDouble("0."+line.split("\\.")[1]))){
-				writer.write(line);
+				writer.write(line+"\n");
 			}
 			else {
 				System.out.println(line);
@@ -177,10 +177,57 @@ public class IndexWords extends Configured implements Tool {
 		e.printStackTrace();
 	  }
   }
+  public static void filterFile(String input, String writeOut, Double min, Double max){
+	  try {
+		List<String> lines=Files.readAllLines(FileSystems.getDefault().getPath(input), Charset.forName("UTF-8"));
+		BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(writeOut), Charset.forName("UTF-8"));
+		for(String line : lines){
+			if(min<Double.parseDouble("0."+line.split("\\.")[1]) && Double.parseDouble("0."+line.split("\\.")[1])<max){
+				writer.write(line+"\n");
+			}
+		}
+		writer.close();
+	  } catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	  }
+  }
+  public static void formatFile(String input, String writeOut){
+	  try {
+		List<String> lines=Files.readAllLines(FileSystems.getDefault().getPath(input), Charset.forName("UTF-8"));
+		BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(writeOut), Charset.forName("UTF-8"));
+		N=0;
+		String curNode="-1";
+		HashMap<String,Integer> degMap= new HashMap<String,Integer>();
+		for(String line : lines){
+			String [] split = line.split("\\s+");
+			if(!split[1].equals(curNode)){
+				N+=1;
+				degMap.put(split[1], 1);
+				curNode=split[1];
+			}
+			else {
+				degMap.put(split[1], degMap.get(split[1])+1);
+			}
+		}
+		double invN = 1.0/N;
+		for(String line : lines){
+			String [] split = line.split("\\s+");
+			writer.write(split[1]+"\t"+invN+" "+split[2]+" "+degMap.get(split[1])+"\n");
+		}
+		writer.close();
+	  } catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	  }
+  }
   public static void main(String[] args) throws Exception {
-	  filterFile("edges.txt","ms2786edges.txt");
-	  //  int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
-   // System.exit(res);
+	  //filterFile("edges.txt","ms2786edges.txt");
+	  //filterFile("ms2786edges.txt","usethese.txt",0.0,.05);
+	  //formatFile("usethese.txt","ourFormat.txt");
+
+	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
+     System.exit(res);
   }
 
 }
