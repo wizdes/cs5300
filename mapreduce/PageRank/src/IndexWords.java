@@ -92,7 +92,7 @@ public class IndexWords extends Configured implements Tool {
     	double sum = 0;
     	ArrayList<String> toSend = new ArrayList<String>();
     	
-    	int deg = 1;
+    	int deg = -1;
     	//System.out.println(key.toString() + "->");
     	double oldPR = 0;
 	    while (values.hasNext()) {
@@ -100,14 +100,16 @@ public class IndexWords extends Configured implements Tool {
 	    	String[] eltArr = x.split(" ");
 	    	//System.out.println(x);
 	    	if(eltArr.length == 3){
+	    		//System.out.println("only one "+x);
 	    		toSend.add(eltArr[0]);
 	    		oldPR = Double.parseDouble(eltArr[2]);
 	    	}
 	    	else {
-	    		System.out.println("sum");
+	    		//System.out.println("sum "+x);
 	    		sum = sum + Double.parseDouble(eltArr[0]);
 	    		deg = Integer.parseInt(eltArr[1]);
 	    	}
+	    	
     	}
 	    double newPR = (1 - d) * 1.0 / N + d * sum;
 	    long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
@@ -201,20 +203,24 @@ public class IndexWords extends Configured implements Tool {
 		String curNode="-1";
 		HashMap<String,Integer> degMap= new HashMap<String,Integer>();
 		for(String line : lines){
-			String [] split = line.split("\\s+");
-			if(!split[1].equals(curNode)){
+			String [] split = line.trim().split("\\s+");
+			if(!split[0].equals(curNode)){
 				N+=1;
-				degMap.put(split[1], 1);
-				curNode=split[1];
+				degMap.put(split[0], 1);
+				curNode=split[0];
 			}
 			else {
-				degMap.put(split[1], degMap.get(split[1])+1);
+				degMap.put(split[0], degMap.get(split[0])+1);
 			}
 		}
 		double invN = 1.0/N;
 		for(String line : lines){
-			String [] split = line.split("\\s+");
-			writer.write(split[1]+"\t"+invN+" "+split[2]+" "+degMap.get(split[1])+"\n");
+			String [] split = line.trim().split("\\s+");
+			if(split[1].contains(".")){
+				System.out.println(line);
+				return;
+			}
+			writer.write(split[0]+"\t"+invN+" "+split[1]+" "+degMap.get(split[0])+"\n");
 		}
 		writer.close();
 	  } catch (IOException e) {
@@ -246,10 +252,10 @@ public class IndexWords extends Configured implements Tool {
   public static void main(String[] args) throws Exception {
 	  //filterFile("edges.txt","ms2786edges.txt");
 	  //filterFile("ms2786edges.txt","usethese.txt",0.0,.05);
-	  //formatFile("usethese.txt","ourFormat.txt");
+	  formatFile("usethese.txt","ourFormat.txt");
 	  cleanFiles("./",args[1]);
 	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
-     System.exit(res);
+      System.exit(res);
   }
 
 }
