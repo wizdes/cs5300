@@ -76,8 +76,12 @@ public class IndexWords extends Configured implements Tool {
     	String v = valueStrArray[1];
     	float prDivDeg = (float) (Float.parseFloat(valueStrArray[0]) * 1.0 / Float.parseFloat(valueStrArray[2]));
     	//spit out what we want
-    	output.collect(new Text(u), new Text(v + " 0 " + valueStrArray[0]));
+    	output.collect(new Text(u), new Text(v + " " + valueStrArray[0]+" "+ valueStrArray[2]));
     	output.collect(new Text(v), new Text(Float.toString(prDivDeg) + " " + valueStrArray[2]));
+    	/*if(u.equals("371972") || v.equals("371972")){
+    		System.out.println(u+": "+v+" "+valueStrArray[0]+" "+ valueStrArray[2]);
+    		System.out.println(v+": "+Float.toString(prDivDeg) + " " + valueStrArray[2]);
+    	}*/
     }
   }
   
@@ -102,7 +106,8 @@ public class IndexWords extends Configured implements Tool {
 	    	if(eltArr.length == 3){
 	    		//System.out.println("only one "+x);
 	    		toSend.add(eltArr[0]);
-	    		oldPR = Double.parseDouble(eltArr[2]);
+	    		oldPR = Double.parseDouble(eltArr[1]);
+	    		deg = Integer.parseInt(eltArr[2]);
 	    	}
 	    	else {
 	    		//System.out.println("sum "+x);
@@ -116,7 +121,8 @@ public class IndexWords extends Configured implements Tool {
 	    //System.out.println(reporter.getCounter(RecordCounters.RESIDUAL_COUNTER)+" + res long"+residualLong);
 	    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
 	    for(String s:toSend){
-	    	//System.out.println("EMIT-" + key.toString() + ":" + Double.toString(newPR) + " " + s + " " + Integer.toString(deg));
+	    	//if(deg==-1)
+	    	//	System.out.println("EMIT-" + key.toString() + ":" + Double.toString(newPR) + " " + s + " " + Integer.toString(deg));
 	    	output.collect(key, new Text(new String(Double.toString(newPR) + " " + s + " " + Integer.toString(deg))));
 	    }
     }
@@ -220,7 +226,7 @@ public class IndexWords extends Configured implements Tool {
 				System.out.println(line);
 				return;
 			}
-			writer.write(split[0]+"\t"+invN+" "+split[1]+" "+degMap.get(split[0])+"\n");
+			writer.write(split[0]+"\t"+invN+" "+split[1		]+" "+degMap.get(split[0])+"\n");
 		}
 		writer.close();
 	  } catch (IOException e) {
@@ -252,7 +258,7 @@ public class IndexWords extends Configured implements Tool {
   public static void main(String[] args) throws Exception {
 	  //filterFile("edges.txt","ms2786edges.txt");
 	  //filterFile("ms2786edges.txt","usethese.txt",0.0,.05);
-	  formatFile("usethese.txt","ourFormat.txt");
+	  //formatFile("usethese.txt","ourFormat.txt");
 	  cleanFiles("./",args[1]);
 	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
       System.exit(res);
