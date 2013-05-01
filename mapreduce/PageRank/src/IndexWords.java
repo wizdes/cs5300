@@ -52,7 +52,7 @@ public class IndexWords extends Configured implements Tool {
 
   static String[] checkWords;
   static double d = 0.85;
-  static int N = 10;
+  static int N = 679773;
   //compute filter parameters for netid ms2786
   static double fromNetID = 0.6872;
   static double rejectMin = 0.99 * fromNetID;
@@ -70,7 +70,6 @@ public class IndexWords extends Configured implements Tool {
     public void map(Text key, Text value,
                     OutputCollector<Text, Text> output,
                     Reporter reporter) throws IOException {
-    	
     	//System.out.println("in Map");
     	String[] valueStrArray = value.toString().split(" ");
     	String u = key.toString();
@@ -117,10 +116,12 @@ public class IndexWords extends Configured implements Tool {
 	    	}
 	    	
     	}
+
 	    double newPR = (1 - d) * 1.0 / N + d * sum;
-	    long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
-	    //System.out.println(reporter.getCounter(RecordCounters.RESIDUAL_COUNTER)+" + res long"+residualLong);
-	    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
+	    if(oldPR!=0){
+	    	long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
+		    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
+	    }
 	    for(String s:toSend){
 	    	//if(deg==-1)
 	    	//	System.out.println("EMIT-" + key.toString() + ":" + Double.toString(newPR) + " " + s + " " + Integer.toString(deg));
@@ -136,7 +137,7 @@ public class IndexWords extends Configured implements Tool {
   	
 	  checkWords = new String[args.length-2];
 	  
-	  int numIter = 20;
+	  int numIter = 5;
 	  
 	  Path input = new Path(args[0]);
 	  
@@ -155,15 +156,12 @@ public class IndexWords extends Configured implements Tool {
 		
 		  FileInputFormat.setInputPaths(conf, input);
 		  FileOutputFormat.setOutputPath(conf, new Path(args[1] + Integer.toString(i)));
-
+		  
 		  RunningJob rj = JobClient.runJob(conf);
 		  input = new Path(args[1]+ Integer.toString(i));
 		  double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
 		  System.out.println(N+" "+(resVal/(1.0*N)));
 		  if(resVal/(1.0*N) < 0.001) break;
-		  else{
-			  rj.getCounters().incrCounter(RecordCounters.RESIDUAL_COUNTER, (long) (-1 * resVal * 10000));
-		  }
 	  }
 	
 	  return 0;
@@ -268,10 +266,10 @@ public class IndexWords extends Configured implements Tool {
 	}
   public static void main(String[] args) throws Exception {
 	  
-	 // filterFile("edges.txt","ms2786edges.txt");
+	  //filterFile("edges.txt","ms2786edges.txt");
 	  //filterFile("ms2786edges.txt","usethese.txt",0.0,.2);
 	  //formatFile("ms2786edges.txt","ourFormat.txt");
-	   cleanFiles("./",args[1]);
+	  cleanFiles("./",args[1]);
 	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
       System.exit(res);
   }
