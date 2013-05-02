@@ -193,7 +193,7 @@ public class IndexWords extends Configured implements Tool {
 		    
 		    double residual = (Math.abs(diff) * 1.0/newPRSum)/inBlock.size();
 		    //System.out.println(residual + " "+ diff+ " " + oldPRSum + " " + newPRSum);
-		    if(residual < 0.00001){
+		    if(residual < 0.0001){
 		    	convergence = true;
 		    }
 	    }
