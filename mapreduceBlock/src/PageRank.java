@@ -48,7 +48,7 @@ import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-public class IndexWords extends Configured implements Tool {
+public class PageRank extends Configured implements Tool {
 
   static String[] checkWords;
   static double d = 0.86;
@@ -60,12 +60,17 @@ public class IndexWords extends Configured implements Tool {
   static double rejectLimit = rejectMin + 0.01;
   static enum RecordCounters{ RESIDUAL_COUNTER , LOOP_COUNTER};
   static int [] elements = {10328,20373,30629,40645,50462,60841,70591,80118,90497,100501,110567,120945,130999,140574,150953,161332,171154,181514,191625,202004,212383,222762,232593,242878,252938,263149,273210,283473,293255,303043,313370,323522,333883,343663,353645,363929,374236,384554,394929,404712,414617,424747,434707,444489,454285,464398,474196,484050,493968,503752,514131,524510,534709,545088,555467,565846,576225,586604,596585,606367,616148,626448,636240,646022,655804,665666,675448,685230};
-  //static int [] elements = {2,4,6,8};
   static int numDiv = 10228;
-  //static int numDiv = 3;
   
+  /**
+   * is a function that returns the blockID of a node given the NodeID
+   * @param NodeID
+   * @return blockID
+   */
   public static int blockIDofNode(int NodeID){
+	  // startLook is a variable that is close to what you expect (since blocks are roughly even)
 	  int startLook = NodeID / numDiv;
+	  // keep iterating until you get to the correct blockIDs
 	  while(startLook < elements.length - 1){
 		  if(elements[0] > NodeID) return 0;
 		  if(startLook == 0){
@@ -80,48 +85,63 @@ public class IndexWords extends Configured implements Tool {
 	  return elements.length;
   }
   
-  //assume 0.0 <= rejectMin < rejectLimit <= 1.0
+  /**
+   * assume 0.0 <= rejectMin < rejectLimit <= 1.0
+   * @param x
+   * @return if it falls within this range, return true, else false
+   */
   public static boolean selectInputLine(double x) {
 		return ( ((x >= rejectMin) && (x < rejectLimit)) ? false : true );
   }
-  ///checks to see if a token had a word that exists in checkWords
-  ///if so it adds that word as well as its offset
+  /**
+   * This is the mapper class
+   * @author yjli
+   *
+   */
   public static class MapClass extends MapReduceBase
     implements Mapper<Text, Text, Text, Text> {
-
+	  /** 
+	   * the map function 
+	   * maps <u PR(u) v| u->v> to <u, v PR(u), deg(u)> and <v, PR(U)/deg | u->v>
+	   */
     public void map(Text key, Text value,
                     OutputCollector<Text, Text> output,
                     Reporter reporter) throws IOException {
-    	//System.out.println("in Map");
     	String[] valueStrArray = value.toString().split(" ");
     	String u = key.toString();
     	String v = valueStrArray[1];
+    	// calculates PageRank divided by Degree
     	float prDivDeg = (float) (Float.parseFloat(valueStrArray[0]) * 1.0 / Float.parseFloat(valueStrArray[2]));
     	//spit out what we want
 
-    	//System.out.println(blockIDofNode(Integer.parseInt(u)) + ": " + u + "->" + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
     	//set of vertices of its Block
-    	//if(blockIDofNode(Integer.parseInt(u)) == 0) System.out.println("IN-" + blockIDofNode(Integer.parseInt(u)) + ": " + u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
     	output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(u)))), 
     			new Text(u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]));
 
     	//set of edges entering the block from the outside
     	if(blockIDofNode(Integer.parseInt(v)) != blockIDofNode(Integer.parseInt(u))){
-        	//if(blockIDofNode(Integer.parseInt(v)) == 0) System.out.println("OU-" + blockIDofNode(Integer.parseInt(v)) + ": " + v + " " + Float.toString(prDivDeg));
     		output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(v)))),
 	    			new Text(v + " " + Float.toString(prDivDeg)));
     	}
     }
   }
   
-  ///puts the offsets together as a String
+  /**
+   * the reduce function
+   * takes the emits from the Mapper and outputs <u, PR^(t+1)(u), v, deg(u)>
+   * @author yjli
+   *
+   */
   public static class Reduce extends MapReduceBase
     implements Reducer<Text, Text, Text, Text> {
-
+	/**
+	 * The Reducer step of Map Reduce
+	 */
     public void reduce(Text key, Iterator<Text> values,
                        OutputCollector<Text, Text> output,
                        Reporter reporter) throws IOException {
 
+    	// data structures necessary for reducing
     	HashMap<String, Double> oriBlockPR = new HashMap<String, Double> ();
     	HashMap<String, Double> inBlockPR = new HashMap<String, Double> ();
     	HashMap<String, ArrayList<ValueElt> > allData = new HashMap<String, ArrayList<ValueElt> > ();
@@ -129,10 +149,11 @@ public class IndexWords extends Configured implements Tool {
     	ArrayList<ValueElt> otherInformation = new ArrayList<ValueElt> ();
     	Set<String> inBlock = new HashSet<String>();
     	
+    	//keep on reading values from input
 	    while (values.hasNext()) {
 	    	String x = values.next().toString();
 	    	String[] eltArr = x.split(" ");
-	    	if(eltArr.length == 2){
+	    	if(eltArr.length == 2){				//Boundary node
 	    		if(boundaryToNode.containsKey(eltArr[0])) {
 	    			Double d = boundaryToNode.get(eltArr[0]);
 	    			Double sum = d + Double.parseDouble(eltArr[1]);
@@ -143,7 +164,7 @@ public class IndexWords extends Configured implements Tool {
 	    			boundaryToNode.put(eltArr[0], new Double(Double.parseDouble(eltArr[1])));
 		    	}
 	    	}
-	    	else {
+	    	else {			//Non-boundary node (these are both inside the block)
 	    		if(!allData.containsKey(eltArr[1])){
 	    			allData.put(eltArr[1], new ArrayList<ValueElt>());
 	    		}
@@ -160,28 +181,32 @@ public class IndexWords extends Configured implements Tool {
 	    boolean convergence = false;
 	    
 	    long numLoops = 0;
+	    
+	    //whilst it hasn't converged, keep running
 	    while(convergence == false){
 	    	numLoops += 1;
+	    	
+	    	//this is the old PR Sum, used to calculate residual
 	    	double oldPRSum = 0;
+	    	//this is the new PR Sum, used to calculate residual
 	    	double newPRSum = 0;
 	    	double diff = 0;
 	    	for(String k : inBlockPR.keySet()){
 	    		oldPRSum += inBlockPR.get(k);
 	    	}
 	    	
+	    	//get the new Page Ranks
 		    for(String k : inBlock){
 		    	double PRSum = 0;
 		    	if(allData.containsKey(k)){
 			    	for(ValueElt edge : allData.get(k)){
 			    		PRSum += edge.PR * 1.0 / edge.deg;
-				    	//System.out.println("Calc for: " + edge.PR + " is: " + edge.deg);
 			    	}
 		    	}
-		    	//System.out.println("PR SUM for: " + k + " is: " + PRSum);
-		    	//System.out.println("Actually for: " + k + " is: " + ((1 - d)*1.0/N + d * 1.0 * PRSum));
 		    	if(boundaryToNode.containsKey(k)) PRSum += boundaryToNode.get(k);
 		    	double oldSpecPR = 0;
 		    	oldSpecPR = inBlockPR.get(k);
+		    	//this is the new PageRank
 		    	inBlockPR.put(k, new Double((1 - d)*1.0/N + d * 1.0 * PRSum));
 		    	newPRSum += (1 - d)*1.0/N + d * 1.0 * PRSum;
 		    	diff += Math.abs((1 - d)*1.0/N + d * 1.0 * PRSum - oldSpecPR);
@@ -193,8 +218,8 @@ public class IndexWords extends Configured implements Tool {
 		    	}
 		    }
 		    
+		    //calculates residual		    
 		    double residual = (Math.abs(diff) * 1.0/newPRSum)/inBlock.size();
-		    //System.out.println(residual + " "+ diff+ " " + oldPRSum + " " + newPRSum);
 		    if(residual < 0.00000001){
 		    	convergence = true;
 		    }
@@ -281,7 +306,7 @@ public class IndexWords extends Configured implements Tool {
 	  
 	  for(int i = 0; i < numIter; i++){
 		  System.out.println("Iter: " + i);
-		  JobConf conf = new JobConf(getConf(), IndexWords.class);
+		  JobConf conf = new JobConf(getConf(), PageRank.class);
 		  conf.setJobName("indexwords");
 		
 		  conf.setInputFormat(KeyValueTextInputFormat.class);
@@ -429,7 +454,7 @@ public class IndexWords extends Configured implements Tool {
 	  formatFile("usethese.txt",args[0]);
 	  System.out.println("N: " + N);
 	  cleanFiles("./",args[1]);
-	  int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
+	  int res = ToolRunner.run(new Configuration(), new PageRank(), args);
       System.exit(res);
   }
 
