@@ -21,6 +21,23 @@ Boundary
 Reduce:
 Output: < u, (PRt+1(u), v, deg(u)) >
 
+We also implemented the extra credit: Random blocks.
+
+Our data structures:
+HashMap<String, Double> oriBlockPR;
+- <Node, PR>
+- Original block PR
+HashMap<String, Double> inBlockPR;	
+- <Node, PR>
+- PR being updated inside block
+HashMap<String, Double> boundaryToNode;
+- <Node, PR>
+- PR of boundary nodes
+HashMap<String, ArrayList<ValueElt>> allData;
+- <Node, List of data passed in>
+- Helper data structure for algorithm
+
+
 We used ms2786 as our netid, thus rejectMin=0.680328 and rejectLimit=0.690328
 Our solution takes in the edge.txt file, which should be copied into the directory, generates a file that corresponds to our userID, and then converts it into our format with some precomupted results.
 Our format is as follows
