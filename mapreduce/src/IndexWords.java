@@ -16,13 +16,14 @@
  * limitations under the License.
  */
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -51,7 +52,8 @@ public class IndexWords extends Configured implements Tool {
 
   static String[] checkWords;
   static double d = 0.85;
-  static int N = 10;
+  static int N = 679773; 
+  //static int N = 7;
   //compute filter parameters for netid ms2786
   static double fromNetID = 0.6872;
   static double rejectMin = 0.99 * fromNetID;
@@ -74,7 +76,7 @@ public class IndexWords extends Configured implements Tool {
     	String[] valueStrArray = value.toString().split(" ");
     	String u = key.toString();
     	String v = valueStrArray[1];
-    	float prDivDeg = (float) (Float.parseFloat(valueStrArray[0]) * 1.0 / Float.parseFloat(valueStrArray[2]));
+    	float prDivDeg = (float) ((float) (Float.parseFloat(valueStrArray[0]) * 1.0 / Float.parseFloat(valueStrArray[2])));
     	//spit out what we want
     	output.collect(new Text(u), new Text(v + " " + valueStrArray[0]+" "+ valueStrArray[2]));
     	output.collect(new Text(v), new Text(Float.toString(prDivDeg) + " " + valueStrArray[2]));
@@ -104,22 +106,23 @@ public class IndexWords extends Configured implements Tool {
 	    	String[] eltArr = x.split(" ");
 	    	//System.out.println(x);
 	    	if(eltArr.length == 3){
-	    		//System.out.println("only one "+x);
 	    		toSend.add(eltArr[0]);
 	    		oldPR = Double.parseDouble(eltArr[1]);
 	    		deg = Integer.parseInt(eltArr[2]);
 	    	}
 	    	else {
-	    		//System.out.println("sum "+x);
 	    		sum = sum + Double.parseDouble(eltArr[0]);
-	    		deg = Integer.parseInt(eltArr[1]);
+	    		//deg = Integer.parseInt(eltArr[1]);
 	    	}
 	    	
     	}
 	    double newPR = (1 - d) * 1.0 / N + d * sum;
-	    long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
-	    //System.out.println(reporter.getCounter(RecordCounters.RESIDUAL_COUNTER)+" + res long"+residualLong);
-	    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
+	    if(oldPR!=0 && newPR!=0){
+		    long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
+		    System.out.println(Math.abs(oldPR - newPR) * 1.0/newPR);
+		    //System.out.println(reporter.getCounter(RecordCounters.RESIDUAL_COUNTER)+" + res long"+residualLong);
+		    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
+	    }
 	    for(String s:toSend){
 	    	//if(deg==-1)
 	    	//	System.out.println("EMIT-" + key.toString() + ":" + Double.toString(newPR) + " " + s + " " + Integer.toString(deg));
@@ -135,7 +138,7 @@ public class IndexWords extends Configured implements Tool {
   	
 	  checkWords = new String[args.length-2];
 	  
-	  int numIter = 1;
+	  int numIter = 20;
 	  
 	  Path input = new Path(args[0]);
 	  
@@ -158,29 +161,33 @@ public class IndexWords extends Configured implements Tool {
 		  RunningJob rj = JobClient.runJob(conf);
 		  input = new Path(args[1]+ Integer.toString(i));
 		  double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
-		  System.out.println(resVal);
-		  if(resVal < 0.001) break;
-		  else{
-			  rj.getCounters().incrCounter(RecordCounters.RESIDUAL_COUNTER, (long) (-1 * resVal * 10000));
-		  }
+		  System.out.println(N+" "+(resVal/(1.0*N)));
+		  if(resVal/(1.0*N) < 0.001) break;
 	  }
 	
 	  return 0;
   }
 
-  public static void filterFile(String input, String writeOut){
+  public static void filterFile(String input, String writeOut, String listFile){
 	  try {
-		List<String> lines=Files.readAllLines(FileSystems.getDefault().getPath(input), Charset.forName("UTF-8"));
-		BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(writeOut), Charset.forName("UTF-8"));
-		for(String line : lines){
-			if(selectInputLine(Double.parseDouble("0."+line.split("\\.")[1]))){
-				writer.write(line+"\n");
-			}
-			else {
-				System.out.println(line);
-			}
-		}
-		writer.close();
+        BufferedReader in = new BufferedReader(new FileReader(input));
+        FileWriter fstream = new FileWriter(writeOut);
+        BufferedWriter out = new BufferedWriter(fstream);
+        FileWriter fstreamList = new FileWriter(listFile);
+        BufferedWriter outList = new BufferedWriter(fstreamList);
+		String line;
+		while((line =in.readLine()) != null) {
+ 			if(selectInputLine(Double.parseDouble("0."+line.split("\\.")[1]))){
+				out.write(line+"\n");
+ 			}
+ 			else {
+ 				outList.write(line+"\n");
+ 				System.out.println(line);
+ 			}
+ 		}
+		out.close();
+		in.close();
+		outList.close();
 	  } catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -188,14 +195,17 @@ public class IndexWords extends Configured implements Tool {
   }
   public static void filterFile(String input, String writeOut, Double min, Double max){
 	  try {
-		List<String> lines=Files.readAllLines(FileSystems.getDefault().getPath(input), Charset.forName("UTF-8"));
-		BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(writeOut), Charset.forName("UTF-8"));
-		for(String line : lines){
-			if(min<Double.parseDouble("0."+line.split("\\.")[1]) && Double.parseDouble("0."+line.split("\\.")[1])<max){
-				writer.write(line+"\n");
-			}
-		}
-		writer.close();
+		  BufferedReader in = new BufferedReader(new FileReader(input));
+		  FileWriter fstream = new FileWriter(writeOut);
+		  BufferedWriter out = new BufferedWriter(fstream);
+		  String line;
+		  while((line =in.readLine()) != null) {
+ 			if(min<Double.parseDouble("0."+line.split("\\.")[1]) && Double.parseDouble("0."+line.split("\\.")[1])<max){
+				out.write(line+"\n");
+ 			}
+ 		}
+		in.close();
+		out.close();
 	  } catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -203,15 +213,17 @@ public class IndexWords extends Configured implements Tool {
   }
   public static void formatFile(String input, String writeOut){
 	  try {
-		List<String> lines=Files.readAllLines(FileSystems.getDefault().getPath(input), Charset.forName("UTF-8"));
-		BufferedWriter writer = Files.newBufferedWriter(FileSystems.getDefault().getPath(writeOut), Charset.forName("UTF-8"));
 		N=0;
 		String curNode="-1";
 		HashMap<String,Integer> degMap= new HashMap<String,Integer>();
-		for(String line : lines){
+		BufferedReader in = new BufferedReader(new FileReader(input));
+        FileWriter fstream = new FileWriter(writeOut);
+        BufferedWriter out = new BufferedWriter(fstream);
+		String line;
+		while((line =in.readLine()) != null) {
 			String [] split = line.trim().split("\\s+");
 			if(!split[0].equals(curNode)){
-				N+=1;
+				N++;
 				degMap.put(split[0], 1);
 				curNode=split[0];
 			}
@@ -219,16 +231,22 @@ public class IndexWords extends Configured implements Tool {
 				degMap.put(split[0], degMap.get(split[0])+1);
 			}
 		}
+		System.out.println(N);
 		double invN = 1.0/N;
-		for(String line : lines){
-			String [] split = line.trim().split("\\s+");
-			if(split[1].contains(".")){
-				System.out.println(line);
-				return;
-			}
-			writer.write(split[0]+"\t"+invN+" "+split[1		]+" "+degMap.get(split[0])+"\n");
-		}
-		writer.close();
+		in.close();
+		in=new BufferedReader(new FileReader(input));
+		while((line =in.readLine()) != null) {
+ 			String [] split = line.trim().split("\\s+");
+ 			if(split[1].contains(".")){
+ 				System.out.println(line);
+ 				in.close();
+ 				out.close();
+ 				return;
+ 			}
+			out.write(split[0]+"\t"+invN+" "+split[1]+" "+degMap.get(split[0])+"\n");
+ 		}
+		in.close();
+		out.close();
 	  } catch (IOException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
@@ -256,9 +274,9 @@ public class IndexWords extends Configured implements Tool {
 	    throw new FileNotFoundException("Failed to delete file: " + f);
 	}
   public static void main(String[] args) throws Exception {
-	  filterFile("edges.txt","ms2786edges.txt");
-	  filterFile("ms2786edges.txt","usethese.txt",0.0,.05);
-	  formatFile("usethese.txt","ourFormat.txt");
+	  //filterFile("edges.txt","ms2786edges.txt","list.txt");
+	  //filterFile("ms2786edges.txt","usethese.txt",0.0,.05);
+	  //formatFile("edges.txt","ourFormat1.txt");
 	  cleanFiles("./",args[1]);
 	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
       System.exit(res);
