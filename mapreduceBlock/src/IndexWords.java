@@ -51,22 +51,31 @@ import org.apache.hadoop.util.ToolRunner;
 public class IndexWords extends Configured implements Tool {
 
   static String[] checkWords;
-  static double d = 0.85;
-  static int N = 679773;
+  static double d = 0.86;
+  //static int N = 679773;
+  static int N = 7;
   //compute filter parameters for netid ms2786
   static double fromNetID = 0.6872;
   static double rejectMin = 0.99 * fromNetID;
   static double rejectLimit = rejectMin + 0.01;
   static enum RecordCounters{ RESIDUAL_COUNTER };
-  static int [] elements = {10328,20373,30629,40645,50462,60841,70591,80118,90497,100501,110567,120945,130999,140574,150953,161332,171154,181514,191625,202004,212383,222762,232593,242878,252938,263149,273210,283473,293255,303043,313370,323522,333883,343663,353645,363929,374236,384554,394929,404712,414617,424747,434707,444489,454285,464398,474196,484050,493968,503752,514131,524510,534709,545088,555467,565846,576225,586604,596585,606367,616148,626448,636240,646022,655804,665666,675448,685230};
+  //static int [] elements = {10328,20373,30629,40645,50462,60841,70591,80118,90497,100501,110567,120945,130999,140574,150953,161332,171154,181514,191625,202004,212383,222762,232593,242878,252938,263149,273210,283473,293255,303043,313370,323522,333883,343663,353645,363929,374236,384554,394929,404712,414617,424747,434707,444489,454285,464398,474196,484050,493968,503752,514131,524510,534709,545088,555467,565846,576225,586604,596585,606367,616148,626448,636240,646022,655804,665666,675448,685230};
+  static int [] elements = {2,4,6,8};
+  //static int numDiv = 10228;
+  static int numDiv = 3;
   
   public static int blockIDofNode(int NodeID){
-	  int startLook = NodeID / 10228;
-	  while(startLook < elements.length){
-		  if(startLook == 0) continue;
-		  if(elements[startLook - 1] < NodeID && elements[startLook] > NodeID){
-			  return startLook - 1;
+	  int startLook = NodeID / numDiv;
+	  while(startLook < elements.length - 1){
+		  if(elements[0] > NodeID) return 0;
+		  if(startLook == 0){
+			  startLook += 1;
+			  continue;
 		  }
+		  else if(elements[startLook - 1] > NodeID && elements[startLook] > NodeID){
+			  return startLook;
+		  }
+		  startLook += 1;
 	  }
 	  return elements.length;
   }
@@ -90,13 +99,18 @@ public class IndexWords extends Configured implements Tool {
     	float prDivDeg = (float) (Float.parseFloat(valueStrArray[0]) * 1.0 / Float.parseFloat(valueStrArray[2]));
     	//spit out what we want
 
+    	//System.out.println(blockIDofNode(Integer.parseInt(u)) + ": " + u + "->" + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
     	//set of vertices of its Block
+    	System.out.println("IN-" + blockIDofNode(Integer.parseInt(u)) + ": " + u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
     	output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(u)))), 
     			new Text(u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]));
 
     	//set of edges entering the block from the outside
-    	output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(v)))),
-    			new Text(v + " " + Float.toString(prDivDeg)));
+    	if(blockIDofNode(Integer.parseInt(v)) != blockIDofNode(Integer.parseInt(u))){
+        	System.out.println("OU-" + blockIDofNode(Integer.parseInt(v)) + ": " + v + " " + Float.toString(prDivDeg));
+    		output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(v)))),
+	    			new Text(v + " " + Float.toString(prDivDeg)));
+    	}
     }
   }
   
@@ -107,89 +121,95 @@ public class IndexWords extends Configured implements Tool {
     public void reduce(Text key, Iterator<Text> values,
                        OutputCollector<Text, Text> output,
                        Reporter reporter) throws IOException {
-    	//ArrayList<String> toSend = new ArrayList<String>();
-    	HashMap<String, ArrayList<Integer> > hmPRIn = new HashMap<String, ArrayList<Integer> >();
-    	HashMap<String, ValueElt> hmInBlock = new HashMap<String, ValueElt>();
-    	HashMap<String, ArrayList<Integer> > hmPRInIn = new HashMap<String, ArrayList<Integer> >();
 
-    	int oldPR = 0;
+    	HashMap<String, Double> oriBlockPR = new HashMap<String, Double> ();
+    	HashMap<String, Double> inBlockPR = new HashMap<String, Double> ();
+    	HashMap<String, ArrayList<ValueElt> > allData = new HashMap<String, ArrayList<ValueElt> > ();
+    	HashMap<String, Double> boundaryToNode = new HashMap<String, Double> ();
+    	ArrayList<ValueElt> otherInformation = new ArrayList<ValueElt> ();
+    	
 	    while (values.hasNext()) {
 	    	String x = values.next().toString();
 	    	String[] eltArr = x.split(" ");
 	    	if(eltArr.length == 2){
-	    		if(hmPRIn.containsKey(eltArr[0])) {
-	    			ArrayList<Integer> al = hmPRIn.get(eltArr[0]);
-		    		al.add(Integer.parseInt(eltArr[1]));
+	    		if(boundaryToNode.containsKey(eltArr[0])) {
+	    			Double d = boundaryToNode.get(eltArr[0]);
+	    			Double sum = d + Double.parseDouble(eltArr[1]);
+	    			boundaryToNode.put(eltArr[0], new Double(sum));
+
 	    		}
 	    		else {
-	    			ArrayList<Integer> al = new ArrayList<Integer>();
-		    		hmPRIn.put(eltArr[0], al);
-		    		al.add(Integer.parseInt(eltArr[1]));
+	    			boundaryToNode.put(eltArr[0], new Double(Double.parseDouble(eltArr[1])));
 		    	}
 	    	}
 	    	else {
-	    		oldPR += Integer.parseInt(eltArr[2]);
-	    		hmInBlock.put(eltArr[0], new ValueElt(eltArr[1], eltArr[2], eltArr[3]));
+	    		if(!allData.containsKey(eltArr[1])){
+	    			allData.put(eltArr[1], new ArrayList<ValueElt>());
+	    		}
+	    		ArrayList<ValueElt> arrList = allData.get(eltArr[1]);
+	    		arrList.add(new ValueElt(eltArr[0], eltArr[2], eltArr[3]));
+	    		
+	    		inBlockPR.put(eltArr[0], Double.parseDouble(eltArr[2]));
+	    		oriBlockPR.put(eltArr[0], Double.parseDouble(eltArr[2]));
+	    		otherInformation.add(new ValueElt(eltArr[0], eltArr[1], eltArr[2], eltArr[3]));
+	    	}
+    	}
+	    
+	    boolean convergence = false;
+	    
+	    while(convergence == false){
+	    	double oldPRSum = 0;
+	    	double newPRSum = 0;
+	    	double diff = 0;
+	    	for(String k : inBlockPR.keySet()){
+	    		oldPRSum += inBlockPR.get(k);
 	    	}
 	    	
-    	}
-
-    	boolean convergence = false;
-    	
-    	int finalVal = 0;
-    	while(!convergence){
-    		
-    		int oldPRConvCal = 0;
-    		for(String s : hmInBlock.keySet()){
-    			oldPRConvCal += hmInBlock.get(s).PR;
-    		}
-    		
-        	for(String s : hmInBlock.keySet()){
-        		int insert = hmInBlock.get(s).PR;
-        		String dest = hmInBlock.get(s).dest;
-        		if(!hmPRInIn.containsKey(dest)){
-        			hmPRInIn.put(dest, new ArrayList<Integer>());
-        		}
-        		ArrayList<Integer> insertArr = hmPRInIn.get(dest);
-        		insertArr.add(insert);
-        	}
-
-
-    		for(String s : hmInBlock.keySet()){		
-    			ValueElt ve = hmInBlock.get(s);
-    			ArrayList<Integer> allIn = hmPRIn.get(s);
-    			int sum = 0;
-    			// boundary conditions
-    			for(Integer i : allIn){
-    				sum += i;
-    			}
-    			for(Integer i : hmPRInIn.get(s)){
-    				sum += i;
-    			}
-    			sum = (int) (sum * d);
-    			ve.PR = sum;
-    		}
-    		
-    		int newPRConvCal = 0;
-    		for(String s : hmInBlock.keySet()){
-    			newPRConvCal += hmInBlock.get(s).PR;
-    		}
-    		finalVal = newPRConvCal - oldPRConvCal;
-    		if(finalVal < 0) finalVal *= -1;
-    		finalVal = finalVal / newPRConvCal / hmInBlock.size();
-    		
-    		if(finalVal < 0.001){
-    			convergence = true;
-    		}
-    	}
-
+		    for(String k : allData.keySet()){
+		    	double PRSum = 0;
+		    	for(ValueElt edge : allData.get(k)){
+		    		PRSum += edge.PR * 1.0 / edge.deg;
+			    	//System.out.println("Calc for: " + edge.PR + " is: " + edge.deg);
+		    	}
+		    	//System.out.println("PR SUM for: " + k + " is: " + PRSum);
+		    	//System.out.println("Actually for: " + k + " is: " + ((1 - d)*1.0/N + d * 1.0 * PRSum));
+		    	if(boundaryToNode.containsKey(k)) PRSum += boundaryToNode.get(k);
+		    	double oldSpecPR = 0;
+		    	if(inBlockPR.containsKey(k)) oldSpecPR = inBlockPR.get(k);
+		    	inBlockPR.put(k, new Double((1 - d)*1.0/N + d * 1.0 * PRSum));
+		    	oriBlockPR.put(k, new Double((1 - d)*1.0/N + d * 1.0 * PRSum));
+		    	newPRSum += (1 - d)*1.0/N + d * 1.0 * PRSum;
+		    	diff += Math.abs((1 - d)*1.0/N + d * 1.0 * PRSum - oldSpecPR);
+		    }
+		    
+		    for(String k : allData.keySet()){
+		    	for(ValueElt edge : allData.get(k)){
+		    		edge.PR = inBlockPR.get(edge.source);
+		    	}
+		    }
+		    
+		    double residual = Math.abs(diff) * 1.0/newPRSum;
+		    //System.out.println(residual + " "+ diff+ " " + oldPRSum + " " + newPRSum);
+		    if(residual < 0.001){
+		    	convergence = true;
+		    }
+	    }
+	    
+	    double diff = 0;
+	    double bot = 0;
+	    for(String k : oriBlockPR.keySet()){
+	    	bot += inBlockPR.get(k);
+	    	diff += Math.abs(oriBlockPR.get(k) - inBlockPR.get(k));
+	    }
+	    double residual = diff * 1.0/bot;
+    	long residualLong = (long) residual * 10000;
 	    // double newPR = (1 - d) * 1.0 / N + d * sum;
 	    // long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
-    	long residualLong = (long) (finalVal * 10000.0);
+    	//long residualLong = (long) (finalVal * 10000.0);
 	    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
-	    for(String s:hmInBlock.keySet()){
-	    	output.collect(new Text(s), 
-	    			new Text(hmInBlock.get(s).PR + " " + hmInBlock.get(s).dest + " " + hmInBlock.get(s).deg));
+	    for(ValueElt ve:otherInformation){
+	    	output.collect(new Text(ve.source), 
+	    			new Text(inBlockPR.get(ve.source) + " " + ve.dest + " " + ve.deg));
 	    }
     }
   }
@@ -206,6 +226,7 @@ public class IndexWords extends Configured implements Tool {
 	  Path input = new Path(args[0]);
 	  
 	  for(int i = 0; i < numIter; i++){
+		  System.out.println("Iter: " + i);
 		  JobConf conf = new JobConf(getConf(), IndexWords.class);
 		  conf.setJobName("indexwords");
 		
