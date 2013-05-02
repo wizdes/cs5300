@@ -191,9 +191,9 @@ public class IndexWords extends Configured implements Tool {
 		    	}
 		    }
 		    
-		    double residual = Math.abs(diff) * 1.0/newPRSum;
+		    double residual = (Math.abs(diff) * 1.0/newPRSum)/inBlock.size();
 		    //System.out.println(residual + " "+ diff+ " " + oldPRSum + " " + newPRSum);
-		    if(residual < 0.001){
+		    if(residual < 0.0001){
 		    	convergence = true;
 		    }
 	    }
@@ -203,9 +203,11 @@ public class IndexWords extends Configured implements Tool {
 	    for(String k : oriBlockPR.keySet()){
 	    	bot += inBlockPR.get(k);
 	    	diff += Math.abs(oriBlockPR.get(k) - inBlockPR.get(k));
+	    	//System.out.println("Ori: " + oriBlockPR.get(k) + "in: " + inBlockPR.get(k));
 	    }
 	    double residual = diff * 1.0/bot;
-    	long residualLong = (long) residual * 10000;
+	    //System.out.println(residual);
+    	long residualLong = (long) (residual * 10000);
 	    // double newPR = (1 - d) * 1.0 / N + d * sum;
 	    // long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
     	//long residualLong = (long) (finalVal * 10000.0);
@@ -249,7 +251,7 @@ public class IndexWords extends Configured implements Tool {
 		  input = new Path(args[1]+ Integer.toString(i));
 		  double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
 		  System.out.println(N+" "+(resVal/(1.0*N)));
-		  //if(resVal/(1.0*N) < 0.001) break;
+		  if(resVal/(1.0*N) < 0.001) break;
 	  }
 	
 	  return 0;
