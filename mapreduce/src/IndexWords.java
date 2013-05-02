@@ -195,25 +195,13 @@ public class IndexWords extends Configured implements Tool {
 		e.printStackTrace();
 	  }
   }
-  public static void filterFile(String input, String writeOut, Double min, Double max){
-	  try {
-		  BufferedReader in = new BufferedReader(new FileReader(input));
-		  FileWriter fstream = new FileWriter(writeOut);
-		  BufferedWriter out = new BufferedWriter(fstream);
-		  String line;
-		  while((line =in.readLine()) != null) {
- 			if(min<Double.parseDouble("0."+line.split("\\.")[1]) && Double.parseDouble("0."+line.split("\\.")[1])<max){
-				out.write(line+"\n");
- 			}
- 		}
-		in.close();
-		out.close();
-	  } catch (IOException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
-	  }
-  }
-  public static void formatFile(String input, String writeOut){
+
+ /**
+ * Writes out a file of our format
+ * @param input The input file to read
+ * @param writeOut The output file to put our format into
+ */
+public static void formatFile(String input, String writeOut){
 	  try {
 		String curNode="-1";
 		HashMap<String,Integer> degMap= new HashMap<String,Integer>();
@@ -247,24 +235,34 @@ public class IndexWords extends Configured implements Tool {
 		in.close();
 		out.close();
 	  } catch (IOException e) {
-		// TODO Auto-generated catch block
 		e.printStackTrace();
 	  }
   }
-  public static void cleanFiles(String folder, String dirName){
+ /**
+ * Removes all files in the folder that contain dirName 
+ * @param folder The folder to look into
+ * @param dirName The dirName to look for
+ */
+public static void cleanFiles(String folder, String dirName){
 	  String[] files =new File(folder).list();
 	  for(String filename : files){
 		  if(filename.contains(dirName)){
 			  try {
 				delete(new File(filename));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		  }
 	  }
   }
-  static void delete(File f) throws IOException {
+  
+ /**
+ * This is to delete all files in a directory because java 6 does 
+ * not have nio.Files
+ * @param f File
+ * @throws IOException If we cannot delete the file
+ */
+static void delete(File f) throws IOException {
 	  if (f.isDirectory()) {
 	    for (File c : f.listFiles())
 	      delete(c);
