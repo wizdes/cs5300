@@ -1,3 +1,26 @@
+
+For our Simple Page Rank algorithm:
+Map:
+Input:      < u, (PRt(u), v, deg(u)) >
+Output: < u, (v, deg(u) | u -> v ) >
+Source, gives structure and deg(u)
+Output: < v, (PRt(u)/deg(u)) >
+Destination, 
+
+Reduce:
+Output: < u, (PRt+1(u), v, deg(u)) >
+
+For our Block Page Rank algorithm:
+Map:
+Input:    < u, (PRt(u), v, deg(u)) >
+Output: < blockID(u), (u, v, PR(u), deg(u)) >
+Non-boundary(u,v inside block)
+Output: < blockID(v), (v, PR(u)/deg(u)) >
+Boundary
+
+Reduce:
+Output: < u, (PRt+1(u), v, deg(u)) >
+
 We used ms2786 as our netid, thus rejectMin=0.680328 and rejectLimit=0.690328
 Our solution takes in the edge.txt file, which should be copied into the directory, generates a file that corresponds to our userID, and then converts it into our format with some precomupted results.
 Our format is as follows
