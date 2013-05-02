@@ -134,17 +134,6 @@ public class IndexWords extends Configured implements Tool {
 	    	
     	}
 
-<<<<<<< HEAD:mapreduce/PageRank/src/IndexWords.java
-	    double newPR = (1 - d) * 1.0 / N + d * sum;
-	    if(oldPR!=0){
-	    	long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
-		    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
-	    }
-	    for(String s:toSend){
-	    	//if(deg==-1)
-	    	//	System.out.println("EMIT-" + key.toString() + ":" + Double.toString(newPR) + " " + s + " " + Integer.toString(deg));
-	    	output.collect(key, new Text(new String(Double.toString(newPR) + " " + s + " " + Integer.toString(deg))));
-=======
     	boolean convergence = false;
     	
     	int finalVal = 0;
@@ -201,7 +190,6 @@ public class IndexWords extends Configured implements Tool {
 	    for(String s:hmInBlock.keySet()){
 	    	output.collect(new Text(s), 
 	    			new Text(hmInBlock.get(s).PR + " " + hmInBlock.get(s).dest + " " + hmInBlock.get(s).deg));
->>>>>>> 97b1cf11f5fd46a612aaa7fbdb9561c90d794887:mapreduceBlock/src/IndexWords.java
 	    }
     }
   }
