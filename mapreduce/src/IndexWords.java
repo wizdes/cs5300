@@ -62,13 +62,22 @@ public class IndexWords extends Configured implements Tool {
   static double rejectLimit = rejectMin + 0.01;
   static enum RecordCounters{ RESIDUAL_COUNTER };
   //assume 0.0 <= rejectMin < rejectLimit <= 1.0
+
+  /**
+   * is a function that returns the blockID of a node given the NodeID
+   * @param NodeID
+   * @return blockID
+   */
   public static boolean selectInputLine(double x) {
 		return ( ((x >= rejectMin) && (x < rejectLimit)) ? false : true );
   }
-  ///checks to see if a token had a word that exists in checkWords
-  ///if so it adds that word as well as its offset
   public static class MapClass extends MapReduceBase
     implements Mapper<Text, Text, Text, Text> {
+
+	  /** 
+	   * the map function 
+	   * maps <u PR(u) v| u->v> to <u, v PR(u), deg(u)> and <v, PR(U)/deg | u->v>
+	   */
 
     public void map(Text key, Text value,
                     OutputCollector<Text, Text> output,
@@ -89,7 +98,12 @@ public class IndexWords extends Configured implements Tool {
     }
   }
   
-  ///puts the offsets together as a String
+  /**
+   * the reduce function
+   * takes the emits from the Mapper and outputs <u, PR^(t+1)(u), v, deg(u)>
+   * @author yjli
+   *
+   */
   public static class Reduce extends MapReduceBase
     implements Reducer<Text, Text, Text, Text> {
 
