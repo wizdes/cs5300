@@ -52,7 +52,7 @@ public class IndexWords extends Configured implements Tool {
 
   static String[] checkWords;
   static double d = 0.86;
-  static int N = 679773;
+  static int N = 685230;
   //static int N = 7;
   //compute filter parameters for netid ms2786
   static double fromNetID = 0.6872;
@@ -368,7 +368,6 @@ public class IndexWords extends Configured implements Tool {
   }
   public static void formatFile(String input, String writeOut){
 	  try {
-		N=0;
 		String curNode="-1";
 		HashMap<String,Integer> degMap= new HashMap<String,Integer>();
 		BufferedReader in = new BufferedReader(new FileReader(input));
@@ -379,7 +378,6 @@ public class IndexWords extends Configured implements Tool {
 			String [] split = line.trim().split("\\s+");
 			if(!split[0].equals(curNode)){
 				//System.out.println(split[0]);;
-				N++;
 				degMap.put(split[0], 1);
 				curNode=split[0];
 			}
@@ -427,9 +425,8 @@ public class IndexWords extends Configured implements Tool {
 	}
   public static void main(String[] args) throws Exception {
 	  
-	  //filterFile("edges.txt","ms2786edges.txt");
-	  //filterFile("ms2786edges.txt","usethese.txt",0.0,1.0);
-	  //formatFile("usethese.txt","ourFormat.txt");
+	  filterFile("edges.txt","ms2786edges.txt");
+	  formatFile("usethese.txt",args[0]);
 	  System.out.println("N: " + N);
 	  cleanFiles("./",args[1]);
 	  int res = ToolRunner.run(new Configuration(), new IndexWords(), args);

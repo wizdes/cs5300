@@ -215,7 +215,6 @@ public class IndexWords extends Configured implements Tool {
   }
   public static void formatFile(String input, String writeOut){
 	  try {
-		N=0;
 		String curNode="-1";
 		HashMap<String,Integer> degMap= new HashMap<String,Integer>();
 		BufferedReader in = new BufferedReader(new FileReader(input));
@@ -225,7 +224,6 @@ public class IndexWords extends Configured implements Tool {
 		while((line =in.readLine()) != null) {
 			String [] split = line.trim().split("\\s+");
 			if(!split[0].equals(curNode)){
-				N++;
 				degMap.put(split[0], 1);
 				curNode=split[0];
 			}
@@ -233,7 +231,6 @@ public class IndexWords extends Configured implements Tool {
 				degMap.put(split[0], degMap.get(split[0])+1);
 			}
 		}
-		System.out.println(N);
 		double invN = 1.0/N;
 		in.close();
 		in=new BufferedReader(new FileReader(input));
@@ -276,9 +273,8 @@ public class IndexWords extends Configured implements Tool {
 	    throw new FileNotFoundException("Failed to delete file: " + f);
 	}
   public static void main(String[] args) throws Exception {
-	  //filterFile("edges.txt","ms2786edges.txt","list.txt");
-	 // filterFile("ms2786edges.txt","usethese.txt",0.0,.1);
-	  //formatFile("usethese.txt","ourFormat1.txt");
+	  filterFile("edges.txt","ms2786edges.txt","list.txt");
+	  formatFile("usethese.txt",args[0]);
 	  cleanFiles("./",args[1]);
 	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
       System.exit(res);
