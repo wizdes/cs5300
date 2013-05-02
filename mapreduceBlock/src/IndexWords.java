@@ -54,15 +54,15 @@ public class IndexWords extends Configured implements Tool {
   static double d = 0.86;
   //static int N = 679773;
   static int N = 7;
-  //compute filter parameters for netid ms2786
-  static double fromNetID = 0.6872;
+  //compute filter parameters for netid yl2326
+  static double fromNetID = 0.6232;
   static double rejectMin = 0.99 * fromNetID;
   static double rejectLimit = rejectMin + 0.01;
   static enum RecordCounters{ RESIDUAL_COUNTER };
-  //static int [] elements = {10328,20373,30629,40645,50462,60841,70591,80118,90497,100501,110567,120945,130999,140574,150953,161332,171154,181514,191625,202004,212383,222762,232593,242878,252938,263149,273210,283473,293255,303043,313370,323522,333883,343663,353645,363929,374236,384554,394929,404712,414617,424747,434707,444489,454285,464398,474196,484050,493968,503752,514131,524510,534709,545088,555467,565846,576225,586604,596585,606367,616148,626448,636240,646022,655804,665666,675448,685230};
-  static int [] elements = {2,4,6,8};
-  //static int numDiv = 10228;
-  static int numDiv = 3;
+  static int [] elements = {10328,20373,30629,40645,50462,60841,70591,80118,90497,100501,110567,120945,130999,140574,150953,161332,171154,181514,191625,202004,212383,222762,232593,242878,252938,263149,273210,283473,293255,303043,313370,323522,333883,343663,353645,363929,374236,384554,394929,404712,414617,424747,434707,444489,454285,464398,474196,484050,493968,503752,514131,524510,534709,545088,555467,565846,576225,586604,596585,606367,616148,626448,636240,646022,655804,665666,675448,685230};
+  //static int [] elements = {2,4,6,8};
+  static int numDiv = 10228;
+  //static int numDiv = 3;
   
   public static int blockIDofNode(int NodeID){
 	  int startLook = NodeID / numDiv;
@@ -101,13 +101,13 @@ public class IndexWords extends Configured implements Tool {
 
     	//System.out.println(blockIDofNode(Integer.parseInt(u)) + ": " + u + "->" + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
     	//set of vertices of its Block
-    	if(blockIDofNode(Integer.parseInt(u)) == 0) System.out.println("IN-" + blockIDofNode(Integer.parseInt(u)) + ": " + u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
+    	//if(blockIDofNode(Integer.parseInt(u)) == 0) System.out.println("IN-" + blockIDofNode(Integer.parseInt(u)) + ": " + u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
     	output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(u)))), 
     			new Text(u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]));
 
     	//set of edges entering the block from the outside
     	if(blockIDofNode(Integer.parseInt(v)) != blockIDofNode(Integer.parseInt(u))){
-        	if(blockIDofNode(Integer.parseInt(v)) == 0) System.out.println("OU-" + blockIDofNode(Integer.parseInt(v)) + ": " + v + " " + Float.toString(prDivDeg));
+        	//if(blockIDofNode(Integer.parseInt(v)) == 0) System.out.println("OU-" + blockIDofNode(Integer.parseInt(v)) + ": " + v + " " + Float.toString(prDivDeg));
     		output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(v)))),
 	    			new Text(v + " " + Float.toString(prDivDeg)));
     	}
@@ -193,7 +193,7 @@ public class IndexWords extends Configured implements Tool {
 		    
 		    double residual = (Math.abs(diff) * 1.0/newPRSum)/inBlock.size();
 		    //System.out.println(residual + " "+ diff+ " " + oldPRSum + " " + newPRSum);
-		    if(residual < 0.0001){
+		    if(residual < 0.00001){
 		    	convergence = true;
 		    }
 	    }
@@ -218,6 +218,55 @@ public class IndexWords extends Configured implements Tool {
 	    }
     }
   }
+  
+  public double trimNum(double val){
+	  double retVal = val * 10000;
+	  long retValLong = (long) retVal;
+	  return (double)(retValLong/10000);
+  }
+  
+  public double getResidual(int iter, String filename){
+	  String filename1 = filename;
+	  String filename2 = "output0/part-00000";
+	  HashMap<String, Double> hm = new HashMap<String, Double>();
+	  HashMap<String, Integer> hm2 = new HashMap<String, Integer>();
+	  double sumDiff = 0;
+	  double sumBot = 0;
+	  if(iter > 0){
+		  filename1 = "output" + Integer.toString(iter - 1) +"/part-00000";
+		  filename2 = "output" + Integer.toString(iter) + "/part-00000";
+	  }
+	  try {
+	        BufferedReader in = new BufferedReader(new FileReader(filename1));
+			String line;
+			while((line =in.readLine()) != null) {
+				String[] lineParams = line.split("\\s+");
+				if(hm.containsKey(lineParams[0])) continue;
+				else{
+					hm.put(lineParams[0], Double.parseDouble(lineParams[1]));
+				}
+			}
+			in.close();
+	        in = new BufferedReader(new FileReader(filename2));
+			while((line =in.readLine()) != null) {
+				String[] lineParams = line.split("\\s+");
+				if(hm2.containsKey(lineParams[0])) continue;
+				else{
+					sumDiff += trimNum(Math.abs(Double.parseDouble(lineParams[1]) - hm.get(lineParams[0]))/Double.parseDouble(lineParams[1]));
+					sumBot += Double.parseDouble(lineParams[1]);
+					hm2.put(lineParams[0], 1);
+					//System.out.println("Diff: " + (Math.abs(Double.parseDouble(lineParams[1]) - hm.get(lineParams[0]))/Double.parseDouble(lineParams[1])));
+				}
+			}
+			in.close();
+			return sumDiff * 1.0;
+		  } catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		  }
+	  
+	  return 0;
+  }
 
   public int run(String[] args) throws Exception {
 	  if(args.length < 2){
@@ -226,7 +275,7 @@ public class IndexWords extends Configured implements Tool {
   	
 	  checkWords = new String[args.length-2];
 	  
-	  int numIter = 5;
+	  int numIter = 10;
 	  
 	  Path input = new Path(args[0]);
 	  
@@ -249,9 +298,15 @@ public class IndexWords extends Configured implements Tool {
 		  
 		  RunningJob rj = JobClient.runJob(conf);
 		  input = new Path(args[1]+ Integer.toString(i));
-		  double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
+		  //double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
+		  double resVal = getResidual(i,args[0]);
 		  System.out.println(N+" "+(resVal/(1.0*N)));
-		  if(resVal/(1.0*N) < 0.001) break;
+		  if(resVal/(1.0 * N) < 0.001){
+			  System.out.println(resVal);
+			  System.out.println(resVal/(1.0 * N));
+			  System.out.println((resVal/(1.0 * N) < 0.001));
+			  break;
+		  }
 	  }
 	
 	  return 0;
@@ -263,14 +318,26 @@ public class IndexWords extends Configured implements Tool {
         FileWriter fstream = new FileWriter(writeOut);
         BufferedWriter out = new BufferedWriter(fstream);
 		String line;
+		int numAll = 0;
+		int numEx = 0;
 		while((line =in.readLine()) != null) {
-			if(selectInputLine(Double.parseDouble("0."+line.split("\\.")[1]))){
+			//System.out.println(line.split("\\s+")[3]);
+			numAll += 1;
+			if(line.split("\\s+").length > 3 && selectInputLine(Double.parseDouble(line.split("\\s+")[3]))){
+				out.write(line+"\n");
+			}
+			else if(line.split("\\s+").length <= 3){
 				out.write(line+"\n");
 			}
 			else {
-				System.out.println(line);
+				numEx += 1;
+				if(line.split("\\s+").length > 3 ){
+				//System.out.println(line.split("\\s+")[3]);
+				//System.out.println(selectInputLine(Double.parseDouble(line.split("\\s+")[3])));
+				}
 			}
 		}
+		System.out.println(numEx + " / " + numAll);
 		out.close();
 	  } catch (IOException e) {
 		// TODO Auto-generated catch block
@@ -286,6 +353,9 @@ public class IndexWords extends Configured implements Tool {
 		  while((line =in.readLine()) != null) {
 			if(min<Double.parseDouble("0."+line.split("\\.")[1]) && Double.parseDouble("0."+line.split("\\.")[1])<max){
 				out.write(line+"\n");
+			}
+			else{
+				//System.out.println(Double.parseDouble("0."+line.split("\\.")[1]));
 			}
 		}
 		out.close();
@@ -315,7 +385,6 @@ public class IndexWords extends Configured implements Tool {
 				degMap.put(split[0], degMap.get(split[0])+1);
 			}
 		}
-		System.out.println(N);
 		double invN = 1.0/N;
 		in.close();
 		in=new BufferedReader(new FileReader(input));
@@ -357,10 +426,11 @@ public class IndexWords extends Configured implements Tool {
   public static void main(String[] args) throws Exception {
 	  
 	  //filterFile("edges.txt","ms2786edges.txt");
-	  //filterFile("ms2786edges.txt","usethese.txt",0.0,.2);
-	  //formatFile("ms2786edges.txt","ourFormat.txt");
+	  //filterFile("ms2786edges.txt","usethese.txt",0.0,1.0);
+	  formatFile("usethese.txt","ourFormat.txt");
+	  System.out.println("N: " + N);
 	  cleanFiles("./",args[1]);
-	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
+	  int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
       System.exit(res);
   }
 
