@@ -1,6 +1,3 @@
-This may be in .pdf or .txt or .doc format. This file should include anything we need to know to grade your assignment. In particular, it should briefly describe the overall structure of your solution, and specify what functionality is implemented in each MapReduce pass. 
-It should also contain the parameters you used for your runs: the netid and computed filter parameters (rejectMin and rejectLimit) used for your filter definition to select edges, and the number of edges actually selected in your graph.
-
 We used ms2786 as our netid, thus rejectMin=0.680328 and rejectLimit=0.690328
 Our solution takes in the edge.txt file, generates a file that corresponds to our userID, and then converts it into our format with some precomupted results.
 Our format is as follows
