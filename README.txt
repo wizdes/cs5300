@@ -1,5 +1,5 @@
 We used ms2786 as our netid, thus rejectMin=0.680328 and rejectLimit=0.690328
-Our solution takes in the edge.txt file, generates a file that corresponds to our userID, and then converts it into our format with some precomupted results.
+Our solution takes in the edge.txt file, which should be copied into the directory, generates a file that corresponds to our userID, and then converts it into our format with some precomupted results.
 Our format is as follows
 NodeIn	PageRank NodeOut Degree(NodeIn)
 
