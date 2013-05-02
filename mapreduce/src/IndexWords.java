@@ -52,7 +52,9 @@ public class IndexWords extends Configured implements Tool {
 
   static String[] checkWords;
   static double d = 0.85;
-  static int N = 679773; 
+  //static int N = 679773; 
+  //True N
+  static int N = 685230;
   //static int N = 7;
   //compute filter parameters for netid ms2786
   static double fromNetID = 0.6872;
@@ -119,7 +121,7 @@ public class IndexWords extends Configured implements Tool {
 	    double newPR = (1 - d) * 1.0 / N + d * sum;
 	    if(oldPR!=0 && newPR!=0){
 		    long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
-		    System.out.println(Math.abs(oldPR - newPR) * 1.0/newPR);
+		   // System.out.println(Math.abs(oldPR - newPR) * 1.0/newPR);
 		    //System.out.println(reporter.getCounter(RecordCounters.RESIDUAL_COUNTER)+" + res long"+residualLong);
 		    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
 	    }
@@ -138,7 +140,7 @@ public class IndexWords extends Configured implements Tool {
   	
 	  checkWords = new String[args.length-2];
 	  
-	  int numIter = 20;
+	  int numIter = 5;
 	  
 	  Path input = new Path(args[0]);
 	  
@@ -182,7 +184,7 @@ public class IndexWords extends Configured implements Tool {
  			}
  			else {
  				outList.write(line+"\n");
- 				System.out.println(line);
+ 				//System.out.println(line);
  			}
  		}
 		out.close();
@@ -275,8 +277,8 @@ public class IndexWords extends Configured implements Tool {
 	}
   public static void main(String[] args) throws Exception {
 	  //filterFile("edges.txt","ms2786edges.txt","list.txt");
-	  //filterFile("ms2786edges.txt","usethese.txt",0.0,.05);
-	  //formatFile("edges.txt","ourFormat1.txt");
+	 // filterFile("ms2786edges.txt","usethese.txt",0.0,.1);
+	  //formatFile("usethese.txt","ourFormat1.txt");
 	  cleanFiles("./",args[1]);
 	    int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
       System.exit(res);
