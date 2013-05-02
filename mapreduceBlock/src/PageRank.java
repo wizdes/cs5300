@@ -451,6 +451,7 @@ public class PageRank extends Configured implements Tool {
   public static void main(String[] args) throws Exception {
 	  
 	  filterFile("edges.txt","ms2786edges.txt");
+	  filterFile("ms2786edges.txt","usethese.txt",0.0,1.0);
 	  formatFile("usethese.txt",args[0]);
 	  System.out.println("N: " + N);
 	  cleanFiles("./",args[1]);
