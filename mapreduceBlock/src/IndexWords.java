@@ -52,10 +52,10 @@ public class IndexWords extends Configured implements Tool {
 
   static String[] checkWords;
   static double d = 0.86;
-  //static int N = 679773;
-  static int N = 7;
-  //compute filter parameters for netid yl2326
-  static double fromNetID = 0.6232;
+  static int N = 679773;
+  //static int N = 7;
+  //compute filter parameters for netid ms2786
+  static double fromNetID = 0.6872;
   static double rejectMin = 0.99 * fromNetID;
   static double rejectLimit = rejectMin + 0.01;
   static enum RecordCounters{ RESIDUAL_COUNTER };
@@ -424,7 +424,7 @@ public class IndexWords extends Configured implements Tool {
 	  
 	  //filterFile("edges.txt","ms2786edges.txt");
 	  //filterFile("ms2786edges.txt","usethese.txt",0.0,1.0);
-	  formatFile("usethese.txt","ourFormat.txt");
+	  //formatFile("usethese.txt","ourFormat.txt");
 	  System.out.println("N: " + N);
 	  cleanFiles("./",args[1]);
 	  int res = ToolRunner.run(new Configuration(), new IndexWords(), args);
