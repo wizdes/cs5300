@@ -101,13 +101,13 @@ public class IndexWords extends Configured implements Tool {
 
     	//System.out.println(blockIDofNode(Integer.parseInt(u)) + ": " + u + "->" + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
     	//set of vertices of its Block
-    	System.out.println("IN-" + blockIDofNode(Integer.parseInt(u)) + ": " + u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
+    	if(blockIDofNode(Integer.parseInt(u)) == 0) System.out.println("IN-" + blockIDofNode(Integer.parseInt(u)) + ": " + u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]);
     	output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(u)))), 
     			new Text(u + " " + v + " " + valueStrArray[0]+" "+ valueStrArray[2]));
 
     	//set of edges entering the block from the outside
     	if(blockIDofNode(Integer.parseInt(v)) != blockIDofNode(Integer.parseInt(u))){
-        	System.out.println("OU-" + blockIDofNode(Integer.parseInt(v)) + ": " + v + " " + Float.toString(prDivDeg));
+        	if(blockIDofNode(Integer.parseInt(v)) == 0) System.out.println("OU-" + blockIDofNode(Integer.parseInt(v)) + ": " + v + " " + Float.toString(prDivDeg));
     		output.collect(new Text(Integer.toString(blockIDofNode(Integer.parseInt(v)))),
 	    			new Text(v + " " + Float.toString(prDivDeg)));
     	}
@@ -127,6 +127,7 @@ public class IndexWords extends Configured implements Tool {
     	HashMap<String, ArrayList<ValueElt> > allData = new HashMap<String, ArrayList<ValueElt> > ();
     	HashMap<String, Double> boundaryToNode = new HashMap<String, Double> ();
     	ArrayList<ValueElt> otherInformation = new ArrayList<ValueElt> ();
+    	Set<String> inBlock = new HashSet<String>();
     	
 	    while (values.hasNext()) {
 	    	String x = values.next().toString();
@@ -152,6 +153,7 @@ public class IndexWords extends Configured implements Tool {
 	    		inBlockPR.put(eltArr[0], Double.parseDouble(eltArr[2]));
 	    		oriBlockPR.put(eltArr[0], Double.parseDouble(eltArr[2]));
 	    		otherInformation.add(new ValueElt(eltArr[0], eltArr[1], eltArr[2], eltArr[3]));
+	    		inBlock.add(eltArr[0]);
 	    	}
     	}
 	    
@@ -165,19 +167,20 @@ public class IndexWords extends Configured implements Tool {
 	    		oldPRSum += inBlockPR.get(k);
 	    	}
 	    	
-		    for(String k : allData.keySet()){
+		    for(String k : inBlock){
 		    	double PRSum = 0;
-		    	for(ValueElt edge : allData.get(k)){
-		    		PRSum += edge.PR * 1.0 / edge.deg;
-			    	//System.out.println("Calc for: " + edge.PR + " is: " + edge.deg);
+		    	if(allData.containsKey(k)){
+			    	for(ValueElt edge : allData.get(k)){
+			    		PRSum += edge.PR * 1.0 / edge.deg;
+				    	//System.out.println("Calc for: " + edge.PR + " is: " + edge.deg);
+			    	}
 		    	}
 		    	//System.out.println("PR SUM for: " + k + " is: " + PRSum);
 		    	//System.out.println("Actually for: " + k + " is: " + ((1 - d)*1.0/N + d * 1.0 * PRSum));
 		    	if(boundaryToNode.containsKey(k)) PRSum += boundaryToNode.get(k);
 		    	double oldSpecPR = 0;
-		    	if(inBlockPR.containsKey(k)) oldSpecPR = inBlockPR.get(k);
+		    	oldSpecPR = inBlockPR.get(k);
 		    	inBlockPR.put(k, new Double((1 - d)*1.0/N + d * 1.0 * PRSum));
-		    	oriBlockPR.put(k, new Double((1 - d)*1.0/N + d * 1.0 * PRSum));
 		    	newPRSum += (1 - d)*1.0/N + d * 1.0 * PRSum;
 		    	diff += Math.abs((1 - d)*1.0/N + d * 1.0 * PRSum - oldSpecPR);
 		    }
@@ -246,7 +249,7 @@ public class IndexWords extends Configured implements Tool {
 		  input = new Path(args[1]+ Integer.toString(i));
 		  double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
 		  System.out.println(N+" "+(resVal/(1.0*N)));
-		  if(resVal/(1.0*N) < 0.001) break;
+		  //if(resVal/(1.0*N) < 0.001) break;
 	  }
 	
 	  return 0;
