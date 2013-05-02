@@ -58,7 +58,7 @@ public class IndexWords extends Configured implements Tool {
   static double fromNetID = 0.6232;
   static double rejectMin = 0.99 * fromNetID;
   static double rejectLimit = rejectMin + 0.01;
-  static enum RecordCounters{ RESIDUAL_COUNTER };
+  static enum RecordCounters{ RESIDUAL_COUNTER , LOOP_COUNTER};
   static int [] elements = {10328,20373,30629,40645,50462,60841,70591,80118,90497,100501,110567,120945,130999,140574,150953,161332,171154,181514,191625,202004,212383,222762,232593,242878,252938,263149,273210,283473,293255,303043,313370,323522,333883,343663,353645,363929,374236,384554,394929,404712,414617,424747,434707,444489,454285,464398,474196,484050,493968,503752,514131,524510,534709,545088,555467,565846,576225,586604,596585,606367,616148,626448,636240,646022,655804,665666,675448,685230};
   //static int [] elements = {2,4,6,8};
   static int numDiv = 10228;
@@ -159,7 +159,9 @@ public class IndexWords extends Configured implements Tool {
 	    
 	    boolean convergence = false;
 	    
+	    long numLoops = 0;
 	    while(convergence == false){
+	    	numLoops += 1;
 	    	double oldPRSum = 0;
 	    	double newPRSum = 0;
 	    	double diff = 0;
@@ -209,6 +211,7 @@ public class IndexWords extends Configured implements Tool {
 	    // long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
     	//long residualLong = (long) (finalVal * 10000.0);
 	    reporter.getCounter(RecordCounters.RESIDUAL_COUNTER).increment(residualLong);
+	    reporter.getCounter(RecordCounters.LOOP_COUNTER).increment(numLoops);
 	    for(ValueElt ve:otherInformation){
 	    	output.collect(new Text(ve.source), 
 	    			new Text(inBlockPR.get(ve.source) + " " + ve.dest + " " + ve.deg));
@@ -296,6 +299,8 @@ public class IndexWords extends Configured implements Tool {
 		  RunningJob rj = JobClient.runJob(conf);
 		  input = new Path(args[1]+ Integer.toString(i));
 		  double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
+		  double loopVal = rj.getCounters().getCounter(RecordCounters.LOOP_COUNTER) * 1.0 / elements.length;
+		  System.out.println("AVg Num loops: " + loopVal);
 		  //double resVal = getResidual(i,args[0]);
 		  System.out.println(N+" "+(resVal/(1.0*N)));
 		  if(resVal/(1.0 * N) < 0.001){
