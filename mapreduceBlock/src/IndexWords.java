@@ -193,21 +193,18 @@ public class IndexWords extends Configured implements Tool {
 		    
 		    double residual = (Math.abs(diff) * 1.0/newPRSum)/inBlock.size();
 		    //System.out.println(residual + " "+ diff+ " " + oldPRSum + " " + newPRSum);
-		    if(residual < 0.0001){
+		    if(residual < 0.00000001){
 		    	convergence = true;
 		    }
 	    }
 	    
-	    double diff = 0;
-	    double bot = 0;
+	    long residual = 0;
 	    for(String k : oriBlockPR.keySet()){
-	    	bot += inBlockPR.get(k);
-	    	diff += Math.abs(oriBlockPR.get(k) - inBlockPR.get(k));
+	    	residual += (long)(10000*(Math.abs(oriBlockPR.get(k) - inBlockPR.get(k))/inBlockPR.get(k)));
 	    	//System.out.println("Ori: " + oriBlockPR.get(k) + "in: " + inBlockPR.get(k));
 	    }
-	    double residual = diff * 1.0/bot;
 	    //System.out.println(residual);
-    	long residualLong = (long) (residual * 10000);
+    	long residualLong = (long) (residual);
 	    // double newPR = (1 - d) * 1.0 / N + d * sum;
 	    // long residualLong = (long)(Math.abs(oldPR - newPR) * 1.0/newPR * 10000.0);
     	//long residualLong = (long) (finalVal * 10000.0);
@@ -298,8 +295,8 @@ public class IndexWords extends Configured implements Tool {
 		  
 		  RunningJob rj = JobClient.runJob(conf);
 		  input = new Path(args[1]+ Integer.toString(i));
-		  //double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
-		  double resVal = getResidual(i,args[0]);
+		  double resVal = rj.getCounters().getCounter(RecordCounters.RESIDUAL_COUNTER) * 1.0/10000;
+		  //double resVal = getResidual(i,args[0]);
 		  System.out.println(N+" "+(resVal/(1.0*N)));
 		  if(resVal/(1.0 * N) < 0.001){
 			  System.out.println(resVal);
